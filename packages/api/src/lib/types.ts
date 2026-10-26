@@ -1,3 +1,5 @@
+import type { NotificationType } from "@quill/db";
+
 export type PublicUser = {
   id: string;
   handle: string;
@@ -58,7 +60,7 @@ export type HourActivity = {
 
 export type NotificationDto = {
   id: string;
-  type: "LIKE" | "REPOST" | "REPLY" | "FOLLOW" | "MENTION";
+  type: NotificationType;
   createdAt: string;
   readAt: string | null;
   actor: PublicUser;

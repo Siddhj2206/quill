@@ -15,7 +15,8 @@ below use `ObjectId(...)` and `new Date(...)`, which is what mongosh expects.
 
 ## S1 — Posts by a user
 
-**Question:** What has this user posted, newest first, excluding replies?
+**Question:** What has this user posted, newest first, excluding replies and
+reposts?
 **Screen:** Profile page, Posts tab.
 **Code:** `packages/api/src/queries/s1-posts-by-user.ts`
 
@@ -26,13 +27,17 @@ db.post
   .find({
     authorId: user._id,
     replyToId: null,
+    repostOfId: null,
     deletedAt: null,
   })
   .sort({ createdAt: -1, _id: -1 })
   .limit(20);
 ```
 
-Prisma version: `db.post.findMany({ where: { authorId, deletedAt: null, replyToId: null }, include: ..., orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 21, cursor, skip: 1 })`.
+Prisma version: `db.post.findMany({ where: { authorId, deletedAt: null, replyToId: null, repostOfId: null }, include: ..., orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 21, cursor, skip: 1 })`.
+
+Reposts still appear in the home timeline; the Posts tab keeps the count aligned
+with `postCount` (posts and replies, not repost rows).
 
 ## S2 — Posts for a hashtag
 
@@ -57,11 +62,14 @@ db.post
 **Code:** `packages/api/src/queries/s3-ten-most-recent-posts.ts`
 
 ```js
-db.post.find({ deletedAt: null, repostOfId: null }).sort({ createdAt: -1, _id: -1 }).limit(10);
+db.post
+  .find({ deletedAt: null, repostOfId: null, replyToId: null })
+  .sort({ createdAt: -1, _id: -1 })
+  .limit(10);
 ```
 
-Repost rows are excluded so a burst of reposts does not fill the Explore feed.
-Reposts still appear in the home timeline and on profiles.
+Repost and reply rows are excluded so a burst of reposts or replies does not
+fill the Explore feed. Reposts still appear in the home timeline.
 
 ## S4 — Followers of a user
 
@@ -257,4 +265,5 @@ db.post.aggregate([
 Drop the `authorId` condition for the global version. `$hour` returns the UTC
 hour unless a `timezone` is supplied; the seed data and the app both use UTC.
 The function returns all 24 hours, filling empty hours with zero, because the
-chart should show the full day.
+chart should show the full day. `bun run queries` runs both the per-user and the
+global variant.

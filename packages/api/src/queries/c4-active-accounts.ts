@@ -1,6 +1,6 @@
 import type { Database } from "@quill/db";
 
-import { asPipeline, asRawDocs, rawNumber, rawObjectId, rawString } from "../lib/raw";
+import { asPipeline, asRawDocs, rawNumber, rawPublicUser } from "../lib/raw";
 import type { ActiveAccount } from "../lib/types";
 
 /**
@@ -52,15 +52,8 @@ export async function activeAccounts(
   });
 
   return asRawDocs(raw).map((doc) => {
-    const user = doc.user as Record<string, unknown>;
     return {
-      user: {
-        id: rawObjectId(user._id) ?? rawObjectId(doc._id) ?? "",
-        handle: rawString(user.handle),
-        name: rawString(user.name),
-        image: typeof user.image === "string" ? user.image : null,
-        bio: rawString(user.bio),
-      },
+      user: rawPublicUser(doc.user, doc._id),
       postCount: rawNumber(doc.postCount),
       totalEngagement: rawNumber(doc.totalEngagement),
       engagementRate: rawNumber(doc.engagementRate),

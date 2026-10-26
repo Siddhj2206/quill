@@ -1,7 +1,15 @@
 import { faker } from "@faker-js/faker";
 
+import { POST_TEXT_MAX } from "@quill/api/lib/text";
 import { createAuth } from "@quill/auth";
 import { createPrismaClient } from "@quill/db";
+
+process.env.QUILL_SEED = "1";
+
+const SEED_NOW = process.env.SEED_NOW ? new Date(process.env.SEED_NOW) : new Date();
+if (Number.isNaN(SEED_NOW.getTime())) {
+  throw new Error("SEED_NOW must be a valid ISO date.");
+}
 
 const db = createPrismaClient({ DATABASE_URL: process.env.DATABASE_URL ?? "" });
 const auth = createAuth(
@@ -13,12 +21,25 @@ const auth = createAuth(
 );
 
 const PASSWORD = "quill12345";
+// Better Auth's scrypt hash for PASSWORD. Pinning it keeps account documents
+// reproducible; the password hash is otherwise salted per sign-up. Keep it in
+// sync with PASSWORD.
+const PASSWORD_HASH =
+  "5dff45b257e63c6ee5bd5093679bac9d:cc6effb968ed74707714dc147758e8a0b6b560a4654af754edd95c8d48bebeb44cfa91a78e42433ea2040af7adffd770f677e31e8612eaf223d3acdc7a29f4a5";
 const USER_COUNT = 50;
 const POST_COUNT = 500;
 const FOLLOW_COUNT = 300;
 const LIKE_COUNT = 1500;
 
 faker.seed(20260101);
+faker.setDefaultRefDate(SEED_NOW);
+
+let seedIdCounter = 0;
+
+function nextSeedId(): string {
+  seedIdCounter += 1;
+  return seedIdCounter.toString(16).padStart(24, "0");
+}
 
 const HANDLES = [
   "demo",
@@ -215,7 +236,7 @@ function makeText(hashtags: string[], mentions: string[]): string {
   if (hashtags.length > 0) {
     text = `${text} ${hashtags.map((tag) => `#${tag}`).join(" ")}`;
   }
-  return text.slice(0, 280);
+  return text.slice(0, POST_TEXT_MAX);
 }
 
 function makeBio(): string {
@@ -248,15 +269,24 @@ async function seedUsers(): Promise<SeededUser[]> {
     });
     await db.user.update({
       where: { id: result.user.id },
-      data: { bio: isDemo ? "Testing the Quill timeline." : makeBio() },
+      data: {
+        bio: isDemo ? "Testing the Quill timeline." : makeBio(),
+        createdAt: SEED_NOW,
+        updatedAt: SEED_NOW,
+      },
+    });
+    await db.account.updateMany({
+      where: { userId: result.user.id },
+      data: { password: PASSWORD_HASH, createdAt: SEED_NOW, updatedAt: SEED_NOW },
     });
     users.push({ id: result.user.id, handle, weight: Math.max(1, 12 - index) });
   }
+  await db.session.deleteMany({});
   return users;
 }
 
 async function seedPosts(users: SeededUser[]) {
-  const now = new Date();
+  const now = SEED_NOW;
   const baseCount = Math.round(POST_COUNT * 0.9);
 
   // Build dates first so replies can point at posts that already exist.
@@ -291,6 +321,7 @@ async function seedPosts(users: SeededUser[]) {
 
     const post = await db.post.create({
       data: {
+        id: nextSeedId(),
         authorId: author.id,
         text: makeText(hashtags, mentions),
         hashtags,
@@ -320,6 +351,7 @@ async function seedPosts(users: SeededUser[]) {
     );
     await db.post.create({
       data: {
+        id: nextSeedId(),
         authorId: author.id,
         text: "",
         hashtags: [],
@@ -345,6 +377,7 @@ async function seedFollows(users: SeededUser[]) {
   for (const target of popular) {
     pairs.add(`${demo.id}:${target.id}`);
     follows.push({
+      id: nextSeedId(),
       followerId: demo.id,
       followingId: target.id,
       createdAt: faker.date.recent({ days: 20 }),
@@ -360,6 +393,7 @@ async function seedFollows(users: SeededUser[]) {
       if (pairs.has(key)) continue;
       pairs.add(key);
       follows.push({
+        id: nextSeedId(),
         followerId: follower.id,
         followingId: target.id,
         createdAt: faker.date.recent({ days: 30 }),
@@ -382,6 +416,7 @@ async function seedFollows(users: SeededUser[]) {
     if (pairs.has(key)) continue;
     pairs.add(key);
     follows.push({
+      id: nextSeedId(),
       followerId: follower.id,
       followingId: following.id,
       createdAt: faker.date.recent({ days: 30 }),
@@ -415,6 +450,7 @@ async function seedLikes(users: SeededUser[], posts: { id: string; authorId: str
     if (pairs.has(key)) continue;
     pairs.add(key);
     likes.push({
+      id: nextSeedId(),
       userId: user.id,
       postId: post.id,
       createdAt: faker.date.recent({ days: 30 }),
@@ -435,6 +471,7 @@ async function seedNotifications(users: SeededUser[], posts: { id: string; autho
     const type = types[index % types.length] ?? "LIKE";
     await db.notification.create({
       data: {
+        id: nextSeedId(),
         recipientId: demo.id,
         actorId: actor.id,
         type,
@@ -458,7 +495,7 @@ async function recomputeCounts() {
     ]);
     await db.user.update({
       where: { id: user.id },
-      data: { followerCount, followingCount, postCount },
+      data: { followerCount, followingCount, postCount, updatedAt: SEED_NOW },
     });
   }
 
@@ -572,7 +609,7 @@ async function main() {
 
   console.log("");
   console.log(
-    `Seeded ${users.length} users, ${posts.length} posts (${postRefs.length} originals).`,
+    `Seeded ${users.length} users, ${posts.length} posts (${postRefs.length} non-repost, ${posts.length - postRefs.length} reposts).`,
   );
   console.log(`All seeded accounts use the password: ${PASSWORD}`);
   console.log("Sign in as demo@quill.dev to see a populated home feed.");

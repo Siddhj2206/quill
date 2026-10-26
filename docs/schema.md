@@ -11,13 +11,13 @@ collections, indexes and constraints.
 `User` keeps every Better Auth field (`id`, `name`, `email`, `emailVerified`,
 `image`, `createdAt`, `updatedAt`) and adds:
 
-| Field            | Type             | Purpose                                                               |
-| ---------------- | ---------------- | --------------------------------------------------------------------- |
-| `handle`         | `String @unique` | Public name. 3–15 letters, numbers or underscores; stored lowercase.  |
-| `bio`            | `String`         | Short profile line.                                                   |
-| `followerCount`  | `Int`            | Denormalized follower total.                                          |
-| `followingCount` | `Int`            | Denormalized following total.                                         |
-| `postCount`      | `Int`            | Denormalized original-post total (replies count, repost rows do not). |
+| Field            | Type             | Purpose                                                              |
+| ---------------- | ---------------- | -------------------------------------------------------------------- |
+| `handle`         | `String @unique` | Public name. 3–15 letters, numbers or underscores; stored lowercase. |
+| `bio`            | `String`         | Short profile line.                                                  |
+| `followerCount`  | `Int`            | Denormalized follower total.                                         |
+| `followingCount` | `Int`            | Denormalized following total.                                        |
+| `postCount`      | `Int`            | Total posts including replies; repost rows do not count.             |
 
 Better Auth generates opaque ids by default. Its `advanced.database.generateId`
 hook is replaced with a 24-character hex ObjectId generator in
@@ -46,11 +46,14 @@ likeCount, replyCount, repostCount, createdAt, deletedAt?
 - **Replies are posts with `replyToId`.** The detail page reads one post and
   its replies by `replyToId`, and a reply can itself be replied to to any depth.
   Embedding comments would cap depth and make pagination awkward.
-- **Reposts are posts with `repostOfId` and empty text.** One collection means
-  home timeline, profile and hashtag reads do not need to merge two shapes.
-- **Soft delete.** `deletedAt` is set on delete. Reads filter it out, so likes
-  and notifications that point at the post remain valid. A repost whose original
-  is deleted is filtered out while hydrating the feed.
+- **Reposts are posts with `repostOfId` and empty text.** One collection keeps
+  home timeline and hashtag reads from needing to merge two shapes. The profile
+  Posts tab excludes repost rows so it stays aligned with `postCount`; reposts
+  remain in the home timeline.
+- **Soft delete.** `deletedAt` is set on delete. Reads filter it out, and the
+  post's notifications are removed, so likes that point at the post remain valid
+  without leaving a stale notification. A repost whose original is deleted is
+  filtered out while hydrating the feed.
 - **Counts are denormalized.** `likeCount`, `replyCount` and `repostCount` are
   updated in the same `$transaction` as the like/follow/reply/repost write. The
   feed never counts child documents per row.

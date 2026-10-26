@@ -1,5 +1,7 @@
 import type { Prisma } from "@quill/db";
 
+import type { PublicUser } from "./types";
+
 // MongoDB aggregation results come back as extended JSON. These helpers are the
 // single place where that untyped boundary is read.
 
@@ -26,6 +28,17 @@ export function rawObjectId(value: unknown): string | null {
     return typeof oid === "string" ? oid : null;
   }
   return null;
+}
+
+export function rawPublicUser(value: unknown, fallbackId?: unknown): PublicUser {
+  const doc = value && typeof value === "object" ? (value as RawDoc) : {};
+  return {
+    id: rawObjectId(doc._id) ?? rawObjectId(fallbackId) ?? "",
+    handle: rawString(doc.handle),
+    name: rawString(doc.name),
+    image: typeof doc.image === "string" ? doc.image : null,
+    bio: rawString(doc.bio),
+  };
 }
 
 export function rawDate(value: unknown): Date {

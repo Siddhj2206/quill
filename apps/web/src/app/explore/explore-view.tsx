@@ -1,17 +1,14 @@
 "use client";
 
 import { Button } from "@quill/ui/components/button";
-import { ItemGroup } from "@quill/ui/components/item";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@quill/ui/components/tabs";
 import { useQuery } from "@tanstack/react-query";
 import type { Route } from "next";
 import Link from "next/link";
 
 import { DiscoverSections } from "@/components/discover";
-import { ListEmpty, ListSkeleton } from "@/components/list-states";
-import { PostCard } from "@/components/post/post-card";
+import { PostListState, UserListState } from "@/components/query-lists";
 import { SearchForm } from "@/components/search-form";
-import { UserRow } from "@/components/user-row";
 import { useTRPC } from "@/utils/trpc";
 
 export function ExploreView({ initialQuery }: { initialQuery: string }) {
@@ -52,31 +49,24 @@ export function ExploreView({ initialQuery }: { initialQuery: string }) {
             </TabsList>
 
             <TabsContent value="users">
-              {search.isPending ? (
-                <ListSkeleton />
-              ) : search.isError ? (
-                <ListEmpty>Could not search users.</ListEmpty>
-              ) : search.data && search.data.users.length > 0 ? (
-                <ItemGroup className="gap-0 divide-y divide-border">
-                  {search.data.users.map((user) => (
-                    <UserRow key={user.id} user={user} />
-                  ))}
-                </ItemGroup>
-              ) : (
-                <ListEmpty>No users found.</ListEmpty>
-              )}
+              <UserListState
+                isPending={search.isPending}
+                isError={search.isError}
+                users={search.data?.users}
+                errorText="Could not search users."
+                emptyText="No users found."
+              />
             </TabsContent>
 
             <TabsContent value="posts">
-              {search.isPending ? (
-                <ListSkeleton rows={2} />
-              ) : search.isError ? (
-                <ListEmpty>Could not search posts.</ListEmpty>
-              ) : search.data && search.data.posts.length > 0 ? (
-                search.data.posts.map((post) => <PostCard key={post.id} post={post} />)
-              ) : (
-                <ListEmpty>No posts found.</ListEmpty>
-              )}
+              <PostListState
+                isPending={search.isPending}
+                isError={search.isError}
+                posts={search.data?.posts}
+                errorText="Could not search posts."
+                emptyText="No posts found."
+                skeletonRows={2}
+              />
             </TabsContent>
           </Tabs>
         </div>
@@ -86,15 +76,13 @@ export function ExploreView({ initialQuery }: { initialQuery: string }) {
             <DiscoverSections />
           </div>
 
-          {latest.isPending ? (
-            <ListSkeleton rows={3} />
-          ) : latest.isError ? (
-            <ListEmpty>Could not load posts.</ListEmpty>
-          ) : latest.data && latest.data.length > 0 ? (
-            latest.data.map((post) => <PostCard key={post.id} post={post} />)
-          ) : (
-            <ListEmpty>No posts yet.</ListEmpty>
-          )}
+          <PostListState
+            isPending={latest.isPending}
+            isError={latest.isError}
+            posts={latest.data}
+            errorText="Could not load posts."
+            emptyText="No posts yet."
+          />
         </div>
       )}
     </>

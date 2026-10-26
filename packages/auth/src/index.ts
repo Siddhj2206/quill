@@ -4,12 +4,20 @@ import type { Database } from "@quill/db";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { z } from "zod";
+
+import { handleSchema, normalizeHandle } from "./handle";
 
 // Better Auth generates opaque string ids by default. MongoDB models in the
 // Prisma schema are ObjectIds, so ids must be 24 hex characters. The leading
 // timestamp keeps ObjectId ordering roughly aligned with creation time.
+let seedId = 0;
+
 export function createObjectId() {
+  if (process.env.QUILL_SEED === "1") {
+    seedId += 1;
+    return seedId.toString(16).padStart(24, "0");
+  }
+
   const timestamp = Math.floor(Date.now() / 1000)
     .toString(16)
     .padStart(8, "0");
@@ -20,10 +28,6 @@ export type AuthConfig = {
   BETTER_AUTH_URL: string;
   BETTER_AUTH_SECRET: string;
 };
-
-const handleSchema = z
-  .string()
-  .regex(/^[a-zA-Z0-9_]{3,15}$/, "Handle must be 3 to 15 letters, numbers or underscores");
 
 export function createAuth(env: AuthConfig, database: Database) {
   return betterAuth({
@@ -48,7 +52,7 @@ export function createAuth(env: AuthConfig, database: Database) {
           input: true,
           validator: { input: handleSchema },
           transform: {
-            input: (value) => (typeof value === "string" ? value.toLowerCase() : value),
+            input: (value) => (typeof value === "string" ? normalizeHandle(value.trim()) : value),
           },
         },
         bio: {

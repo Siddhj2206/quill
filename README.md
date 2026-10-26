@@ -48,6 +48,16 @@ bun run db:seed
 ```
 
 `db:seed` wipes the database first, then recreates it. It is safe to run again.
+The seed content is deterministic and uses deterministic ids. Set `SEED_NOW` to
+freeze timestamps too, for a byte-identical fixture:
+
+```bash
+SEED_NOW=2026-10-26T20:00:00Z bun run db:seed
+```
+
+Without `SEED_NOW`, dates are relative to the current time so the "last 24
+hours" trending cards stay populated.
+
 All seeded accounts share the password `quill12345`; sign in as
 `demo@quill.dev` to see a populated home timeline. Other accounts use
 `<handle>@quill.dev`, for example `mira@quill.dev`.
@@ -125,17 +135,21 @@ hidden on smaller screens, where search moves to the top of Explore and the
 discovery cards move below it.
 
 - `/home` — posts from people you follow plus your own, with the composer and
-  refresh action
+  refresh action. The sidebar Post button opens the same composer in a dialog
 - `/explore` — latest original posts (S3); search lives in the right sidebar on
   desktop and at the top of the page on mobile. The right sidebar also carries
   trending (C2), who to follow (C3) and active accounts (C4)
-- `/notifications` — likes, reposts, replies, follows and mentions; mark all read
+- `/notifications` — likes, reposts, replies, follows and mentions; mark one or
+  all read. The unread badge refreshes every 30 seconds
 - `/[handle]` — profile header with counts (S5), follow button, Posts (S1),
   Replies and Likes tabs, posting activity chart (C5)
 - `/post/[id]` — a post and its replies
 - `/hashtag/[tag]` — posts for one hashtag (S2)
 - `/login`, `/signup` — Better Auth email/password; the logged-out sidebar puts
   Log in and Sign up in the footer
+
+Posts can be deleted by their author. Deletion is a soft delete; replies that
+point at the post remain readable, and the post's notifications are removed.
 
 ## Case-study queries
 

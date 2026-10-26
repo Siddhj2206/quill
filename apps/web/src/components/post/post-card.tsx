@@ -58,58 +58,34 @@ export function PostCard({ post, clickable = true }: { post: PostDto; clickable?
     setRepostCount(display.repostCount);
   }, [post.likedByMe, post.repostedByMe, display.likeCount, display.repostCount]);
 
+  const invalidate = async () => {
+    await queryClient.invalidateQueries();
+  };
+  const onActionError = (error: { message: string }) => {
+    toast.error(error.message);
+    void queryClient.invalidateQueries();
+  };
+
   const like = useMutation(
-    trpc.posts.like.mutationOptions({
-      onSuccess: async () => {
-        await queryClient.invalidateQueries();
-      },
-      onError: (error) => {
-        toast.error(error.message);
-        void queryClient.invalidateQueries();
-      },
-    }),
+    trpc.posts.like.mutationOptions({ onSuccess: invalidate, onError: onActionError }),
   );
   const unlike = useMutation(
-    trpc.posts.unlike.mutationOptions({
-      onSuccess: async () => {
-        await queryClient.invalidateQueries();
-      },
-      onError: (error) => {
-        toast.error(error.message);
-        void queryClient.invalidateQueries();
-      },
-    }),
+    trpc.posts.unlike.mutationOptions({ onSuccess: invalidate, onError: onActionError }),
   );
   const repost = useMutation(
-    trpc.posts.repost.mutationOptions({
-      onSuccess: async () => {
-        await queryClient.invalidateQueries();
-      },
-      onError: (error) => {
-        toast.error(error.message);
-        void queryClient.invalidateQueries();
-      },
-    }),
+    trpc.posts.repost.mutationOptions({ onSuccess: invalidate, onError: onActionError }),
   );
   const undoRepost = useMutation(
-    trpc.posts.undoRepost.mutationOptions({
-      onSuccess: async () => {
-        await queryClient.invalidateQueries();
-      },
-      onError: (error) => {
-        toast.error(error.message);
-        void queryClient.invalidateQueries();
-      },
-    }),
+    trpc.posts.undoRepost.mutationOptions({ onSuccess: invalidate, onError: onActionError }),
   );
   const remove = useMutation(
     trpc.posts.delete.mutationOptions({
       onSuccess: async () => {
         setDeleteOpen(false);
-        await queryClient.invalidateQueries();
+        await invalidate();
         toast.success("Post deleted.");
       },
-      onError: (error) => toast.error(error.message),
+      onError: onActionError,
     }),
   );
 

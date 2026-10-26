@@ -3,6 +3,7 @@
 import { Button } from "@quill/ui/components/button";
 import { Textarea } from "@quill/ui/components/textarea";
 import { cn } from "@quill/ui/lib/utils";
+import { POST_TEXT_MAX } from "@quill/api/lib/text";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -45,7 +46,7 @@ export function PostComposerForm({
 
   if (!session) return null;
 
-  const remaining = 280 - text.length;
+  const remaining = POST_TEXT_MAX - text.length;
   const canSubmit = text.trim().length > 0 && remaining >= 0 && !createPost.isPending;
 
   return (
@@ -91,7 +92,7 @@ export function PostComposerForm({
                   remaining < 0 ? "text-destructive" : "text-muted-foreground",
                 )}
               >
-                {text.length}/280
+                {text.length}/{POST_TEXT_MAX}
               </span>
             ) : null}
             <Button type="submit" size="sm" disabled={!canSubmit}>

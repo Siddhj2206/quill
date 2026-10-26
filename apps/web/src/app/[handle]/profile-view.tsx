@@ -24,37 +24,34 @@ import { PostingActivityChart } from "@/components/post/posting-activity-chart";
 import { UserAvatar } from "@/components/user-avatar";
 import { useTRPC } from "@/utils/trpc";
 
-function UserPosts({ handle }: { handle: string }) {
+function useProfileFeed(kind: "posts" | "replies" | "likes", handle: string) {
   const trpc = useTRPC();
-  const query = useInfiniteQuery(
-    trpc.posts.byUser.infiniteQueryOptions(
-      { handle, limit: 20 },
-      { getNextPageParam: (lastPage) => lastPage.nextCursor },
-    ),
-  );
-  return <PostFeed query={query} emptyText="No posts yet." />;
+  const input = { handle, limit: 20 };
+  const options = {
+    posts: trpc.posts.byUser.infiniteQueryOptions(input, {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    }),
+    replies: trpc.posts.repliesByUser.infiniteQueryOptions(input, {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    }),
+    likes: trpc.posts.likesByUser.infiniteQueryOptions(input, {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+    }),
+  }[kind];
+  return useInfiniteQuery(options);
 }
 
-function UserReplies({ handle }: { handle: string }) {
-  const trpc = useTRPC();
-  const query = useInfiniteQuery(
-    trpc.posts.repliesByUser.infiniteQueryOptions(
-      { handle, limit: 20 },
-      { getNextPageParam: (lastPage) => lastPage.nextCursor },
-    ),
-  );
-  return <PostFeed query={query} emptyText="No replies yet." />;
-}
-
-function UserLikes({ handle }: { handle: string }) {
-  const trpc = useTRPC();
-  const query = useInfiniteQuery(
-    trpc.posts.likesByUser.infiniteQueryOptions(
-      { handle, limit: 20 },
-      { getNextPageParam: (lastPage) => lastPage.nextCursor },
-    ),
-  );
-  return <PostFeed query={query} emptyText="No likes yet." />;
+function ProfileFeed({
+  kind,
+  handle,
+  emptyText,
+}: {
+  kind: "posts" | "replies" | "likes";
+  handle: string;
+  emptyText: string;
+}) {
+  const query = useProfileFeed(kind, handle);
+  return <PostFeed query={query} emptyText={emptyText} />;
 }
 
 export function ProfileView({ handle }: { handle: string }) {
@@ -145,7 +142,7 @@ export function ProfileView({ handle }: { handle: string }) {
           <div className="flex flex-wrap items-center gap-5 text-sm">
             <span>
               <span className="font-semibold">{counts.postCount}</span>{" "}
-              <span className="text-muted-foreground">posts</span>
+              <span className="text-muted-foreground">posts and replies</span>
             </span>
             <FollowListDialog handle={user.handle} kind="followers">
               <span className="font-semibold">{counts.followerCount}</span>{" "}
@@ -176,13 +173,13 @@ export function ProfileView({ handle }: { handle: string }) {
           <TabsTrigger value="likes">Likes</TabsTrigger>
         </TabsList>
         <TabsContent value="posts">
-          <UserPosts handle={user.handle} />
+          <ProfileFeed kind="posts" handle={user.handle} emptyText="No posts yet." />
         </TabsContent>
         <TabsContent value="replies">
-          <UserReplies handle={user.handle} />
+          <ProfileFeed kind="replies" handle={user.handle} emptyText="No replies yet." />
         </TabsContent>
         <TabsContent value="likes">
-          <UserLikes handle={user.handle} />
+          <ProfileFeed kind="likes" handle={user.handle} emptyText="No likes yet." />
         </TabsContent>
       </Tabs>
     </>

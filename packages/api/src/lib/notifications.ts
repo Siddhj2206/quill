@@ -1,16 +1,15 @@
-import type { Database, Prisma } from "@quill/db";
+import type { Database, NotificationType, Prisma } from "@quill/db";
 
 type Tx = Prisma.TransactionClient;
 
-export async function createNotification(
-  tx: Tx,
-  input: {
-    recipientId: string;
-    actorId: string;
-    type: "LIKE" | "REPOST" | "REPLY" | "FOLLOW" | "MENTION";
-    postId?: string | null;
-  },
-): Promise<void> {
+type NotificationInput = {
+  recipientId: string;
+  actorId: string;
+  type: NotificationType;
+  postId?: string | null;
+};
+
+export async function createNotification(tx: Tx, input: NotificationInput): Promise<void> {
   if (input.recipientId === input.actorId) return;
   await tx.notification.create({
     data: {
@@ -24,12 +23,7 @@ export async function createNotification(
 
 export async function deleteNotification(
   db: Database | Tx,
-  input: {
-    recipientId: string;
-    actorId: string;
-    type: "LIKE" | "REPOST" | "REPLY" | "FOLLOW" | "MENTION";
-    postId?: string | null;
-  },
+  input: NotificationInput,
 ): Promise<void> {
   await db.notification.deleteMany({
     where: {

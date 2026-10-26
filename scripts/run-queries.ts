@@ -73,10 +73,6 @@ async function main() {
   const demo = await db.user.findUnique({ where: { handle: "demo" } });
   if (!demo) throw new Error("Seed the database first: bun run db:seed");
 
-  const samplePost = await db.post.findFirst({
-    where: { authorId: demo.id, replyToId: null, deletedAt: null, repostOfId: null },
-    orderBy: { createdAt: "desc" },
-  });
   const sampleTag = "typescript";
   const followed = await db.follow.findMany({
     where: { followerId: demo.id },
@@ -87,11 +83,12 @@ async function main() {
 
   show(
     "S1",
-    "What has this user posted, newest first, excluding replies?",
+    "What has this user posted, newest first, excluding replies and reposts?",
     "Profile page, Posts tab",
     `db.post.find({
   authorId: ObjectId("${demo.id}"),
   replyToId: null,
+  repostOfId: null,
   deletedAt: null,
 }).sort({ createdAt: -1, _id: -1 }).limit(3)`,
     (await postsByUser(db, demo.id, { limit: 3 })).items.map((post) => ({
@@ -120,7 +117,7 @@ async function main() {
     "S3",
     "What are the ten most recent original posts from everyone?",
     "Explore page, latest posts",
-    `db.post.find({ deletedAt: null, repostOfId: null })
+    `db.post.find({ deletedAt: null, repostOfId: null, replyToId: null })
   .sort({ createdAt: -1, _id: -1 })
   .limit(10)`,
     (await tenMostRecentPosts(db)).map((post) => ({
@@ -210,10 +207,13 @@ async function main() {
     await postingActivityByHour(db, { userId: demo.id }),
   );
 
-  if (samplePost) {
-    console.log("");
-    console.log(`(Sample post for S2/C1 checks: ${samplePost.id})`);
-  }
+  show(
+    "C5 (global)",
+    "How many posts were created in each hour of the day for everyone?",
+    "CLI check for the global variant",
+    pipeline("post", postingActivityPipeline()),
+    await postingActivityByHour(db),
+  );
 }
 
 await main();

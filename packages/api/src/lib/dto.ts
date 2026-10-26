@@ -76,9 +76,10 @@ export async function hydratePosts(
   posts: PostWithRelations[],
   viewerId?: string | null,
 ): Promise<PostDto[]> {
-  if (posts.length === 0) return [];
+  const visible = posts.filter((post) => !post.repostOfId || post.repostOf?.deletedAt === null);
+  if (visible.length === 0) return [];
 
-  const targetIds = [...new Set(posts.map((post) => post.repostOf?.id ?? post.id))];
+  const targetIds = [...new Set(visible.map((post) => post.repostOf?.id ?? post.id))];
 
   const [likes, reposts] = viewerId
     ? await Promise.all([
@@ -100,7 +101,7 @@ export async function hydratePosts(
     ),
   };
 
-  return posts.map((post) => buildPostDto(post, post.repostOf?.id ?? post.id, flags));
+  return visible.map((post) => buildPostDto(post, post.repostOf?.id ?? post.id, flags));
 }
 
 export function paginate<T>(items: T[], limit: number, toCursor: (item: T) => string): Page<T> {

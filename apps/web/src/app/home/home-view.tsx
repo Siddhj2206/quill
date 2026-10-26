@@ -6,7 +6,7 @@ import { RefreshCwIcon } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 
-import { ComposerBar } from "@/components/compose/composer-bar";
+import { PostComposerForm } from "@/components/compose/post-composer";
 import { PageHeader } from "@/components/page";
 import { PostFeed } from "@/components/post/post-feed";
 import { useTRPC } from "@/utils/trpc";
@@ -38,7 +38,7 @@ export function HomeView() {
           </Button>
         }
       />
-      <ComposerBar />
+      <PostComposerForm />
       <PostFeed
         query={query}
         emptyText="No posts yet."

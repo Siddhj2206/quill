@@ -1,5 +1,5 @@
+import { handleInputSchema } from "@quill/auth/handle";
 import { TRPCError } from "@trpc/server";
-import { z } from "zod";
 
 import { protectedProcedure, publicProcedure, router } from "../index";
 import { publicUserSelect, toPublicUser } from "../lib/dto";
@@ -10,15 +10,8 @@ import { suggestedAccounts } from "../queries/c3-suggested-accounts";
 import { followersOfUser, followingOfUser } from "../queries/s4-followers-of-user";
 import { userCounts } from "../queries/s5-user-counts";
 
-const handleInput = z
-  .string()
-  .min(3)
-  .max(15)
-  .regex(/^[a-z0-9_]+$/i, "Handles use letters, numbers and underscores")
-  .transform((handle) => handle.toLowerCase());
-
 export const usersRouter = router({
-  handleAvailable: publicProcedure.input(handleInput).query(async ({ ctx, input }) => {
+  handleAvailable: publicProcedure.input(handleInputSchema).query(async ({ ctx, input }) => {
     const existing = await ctx.db.user.findUnique({
       where: { handle: input },
       select: { id: true },
@@ -26,7 +19,7 @@ export const usersRouter = router({
     return existing === null;
   }),
 
-  profile: publicProcedure.input(handleInput).query(async ({ ctx, input }) => {
+  profile: publicProcedure.input(handleInputSchema).query(async ({ ctx, input }) => {
     const user = await ctx.db.user.findUnique({
       where: { handle: input },
       select: { ...publicUserSelect, createdAt: true },
@@ -51,7 +44,7 @@ export const usersRouter = router({
     };
   }),
 
-  followers: publicProcedure.input(handleInput).query(async ({ ctx, input }) => {
+  followers: publicProcedure.input(handleInputSchema).query(async ({ ctx, input }) => {
     const user = await ctx.db.user.findUnique({
       where: { handle: input },
       select: { id: true },
@@ -60,7 +53,7 @@ export const usersRouter = router({
     return followersOfUser(ctx.db, user.id);
   }),
 
-  following: publicProcedure.input(handleInput).query(async ({ ctx, input }) => {
+  following: publicProcedure.input(handleInputSchema).query(async ({ ctx, input }) => {
     const user = await ctx.db.user.findUnique({
       where: { handle: input },
       select: { id: true },
@@ -69,7 +62,7 @@ export const usersRouter = router({
     return followingOfUser(ctx.db, user.id);
   }),
 
-  follow: protectedProcedure.input(handleInput).mutation(async ({ ctx, input }) => {
+  follow: protectedProcedure.input(handleInputSchema).mutation(async ({ ctx, input }) => {
     const target = await ctx.db.user.findUnique({
       where: { handle: input },
       select: { id: true, followerCount: true },
@@ -105,7 +98,7 @@ export const usersRouter = router({
     return { id: target.id };
   }),
 
-  unfollow: protectedProcedure.input(handleInput).mutation(async ({ ctx, input }) => {
+  unfollow: protectedProcedure.input(handleInputSchema).mutation(async ({ ctx, input }) => {
     const target = await ctx.db.user.findUnique({
       where: { handle: input },
       select: { id: true },
@@ -120,17 +113,13 @@ export const usersRouter = router({
 
     await ctx.db.$transaction(async (tx) => {
       await tx.follow.delete({ where: { id: existing.id } });
-      const [targetUser, viewer] = await Promise.all([
-        tx.user.findUnique({ where: { id: target.id }, select: { followerCount: true } }),
-        tx.user.findUnique({ where: { id: viewerId }, select: { followingCount: true } }),
-      ]);
-      await tx.user.update({
-        where: { id: target.id },
-        data: { followerCount: Math.max(0, (targetUser?.followerCount ?? 1) - 1) },
+      await tx.user.updateMany({
+        where: { id: target.id, followerCount: { gt: 0 } },
+        data: { followerCount: { decrement: 1 } },
       });
-      await tx.user.update({
-        where: { id: viewerId },
-        data: { followingCount: Math.max(0, (viewer?.followingCount ?? 1) - 1) },
+      await tx.user.updateMany({
+        where: { id: viewerId, followingCount: { gt: 0 } },
+        data: { followingCount: { decrement: 1 } },
       });
       await deleteNotification(tx, {
         recipientId: target.id,
@@ -150,7 +139,7 @@ export const usersRouter = router({
     return activeAccounts(ctx.db);
   }),
 
-  activity: publicProcedure.input(handleInput).query(async ({ ctx, input }) => {
+  activity: publicProcedure.input(handleInputSchema).query(async ({ ctx, input }) => {
     const user = await ctx.db.user.findUnique({
       where: { handle: input },
       select: { id: true },

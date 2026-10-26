@@ -1,9 +1,6 @@
-import { z } from "zod";
-
 import { protectedProcedure, router } from "../index";
 import { publicUserSelect, toNotificationDto } from "../lib/dto";
-
-const objectId = z.string().regex(/^[0-9a-f]{24}$/, "Invalid id");
+import { objectIdSchema } from "../lib/validation";
 
 export const notificationsRouter = router({
   list: protectedProcedure.query(async ({ ctx }) => {
@@ -25,7 +22,7 @@ export const notificationsRouter = router({
     });
   }),
 
-  markRead: protectedProcedure.input(objectId).mutation(async ({ ctx, input }) => {
+  markRead: protectedProcedure.input(objectIdSchema).mutation(async ({ ctx, input }) => {
     await ctx.db.notification.updateMany({
       where: { id: input, recipientId: ctx.session.user.id, readAt: null },
       data: { readAt: new Date() },

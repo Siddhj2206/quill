@@ -1,10 +1,11 @@
 import type { Database } from "@quill/db";
 
-import { hydratePosts, paginate, postInclude } from "../lib/dto";
+import { findPostPage } from "../lib/post-page";
 import type { Page, PostDto } from "../lib/types";
 
 /**
- * Question: What has this user posted, newest first, excluding replies?
+ * Question: What has this user posted, newest first, excluding replies and
+ * reposts?
  * Screen: Profile page, Posts tab.
  */
 export async function postsByUser(
@@ -12,15 +13,5 @@ export async function postsByUser(
   userId: string,
   options: { cursor?: string | null; viewerId?: string | null; limit?: number } = {},
 ): Promise<Page<PostDto>> {
-  const limit = options.limit ?? 20;
-  const posts = await db.post.findMany({
-    where: { authorId: userId, deletedAt: null, replyToId: null },
-    include: postInclude,
-    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    take: limit + 1,
-    ...(options.cursor ? { cursor: { id: options.cursor }, skip: 1 } : {}),
-  });
-
-  const page = paginate(posts, limit, (post) => post.id);
-  return { ...page, items: await hydratePosts(db, page.items, options.viewerId) };
+  return findPostPage(db, { authorId: userId, replyToId: null, repostOfId: null }, options);
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { POST_TEXT_MAX } from "@quill/api/lib/text";
 import {
   Dialog,
   DialogContent,
@@ -48,7 +49,7 @@ export function ComposeProvider({ children }: { children: React.ReactNode }) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New post</DialogTitle>
-            <DialogDescription>Up to 280 characters.</DialogDescription>
+            <DialogDescription>Up to {POST_TEXT_MAX} characters.</DialogDescription>
           </DialogHeader>
           <PostComposerForm autoFocus onSuccess={() => setOpen(false)} className="border-0 p-0" />
         </DialogContent>

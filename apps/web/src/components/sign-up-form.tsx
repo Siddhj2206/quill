@@ -18,6 +18,7 @@ import {
 import { Input } from "@quill/ui/components/input";
 import { useForm } from "@tanstack/react-form";
 import { useQueryClient } from "@tanstack/react-query";
+import { handleInputSchema, HANDLE_RULE, normalizeHandle } from "@quill/auth/handle";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -25,8 +26,6 @@ import { z } from "zod";
 
 import { authClient } from "@/lib/auth-client";
 import { useTRPC } from "@/utils/trpc";
-
-const handlePattern = /^[a-z0-9_]{3,15}$/;
 
 export default function SignUpForm() {
   const router = useRouter();
@@ -36,7 +35,7 @@ export default function SignUpForm() {
   const form = useForm({
     defaultValues: { name: "", email: "", handle: "", password: "" },
     onSubmit: async ({ value }) => {
-      const handle = value.handle.toLowerCase();
+      const handle = normalizeHandle(value.handle.trim());
       const available = await queryClient.fetchQuery(
         trpc.users.handleAvailable.queryOptions(handle),
       );
@@ -62,10 +61,7 @@ export default function SignUpForm() {
       onSubmit: z.object({
         name: z.string().min(2, "Name must be at least 2 characters"),
         email: z.email("Enter a valid email address"),
-        handle: z
-          .string()
-          .toLowerCase()
-          .regex(handlePattern, "Use 3 to 15 letters, numbers or underscores"),
+        handle: handleInputSchema,
         password: z.string().min(8, "Password must be at least 8 characters"),
       }),
     },
@@ -118,10 +114,10 @@ export default function SignUpForm() {
                     autoComplete="username"
                     value={field.state.value}
                     onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value.toLowerCase())}
+                    onChange={(event) => field.handleChange(normalizeHandle(event.target.value))}
                     aria-invalid={field.state.meta.errors.length > 0}
                   />
-                  <FieldDescription>3 to 15 letters, numbers or underscores.</FieldDescription>
+                  <FieldDescription>{HANDLE_RULE}</FieldDescription>
                   <FieldError
                     errors={field.state.meta.errors.map((error) => ({
                       message: typeof error === "string" ? error : error?.message,

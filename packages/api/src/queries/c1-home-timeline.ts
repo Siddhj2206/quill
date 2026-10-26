@@ -10,11 +10,12 @@ import {
   rawDate,
   rawNumber,
   rawObjectId,
+  rawPublicUser,
   rawString,
   rawStringArray,
   type RawDoc,
 } from "../lib/raw";
-import type { Page, PostDto, PublicUser } from "../lib/types";
+import type { Page, PostDto } from "../lib/types";
 
 /**
  * Question: What did the people this user follows (and the user) post, newest
@@ -91,7 +92,7 @@ export async function homeTimeline(
   const pageDocs = hasMore ? docs.slice(0, limit) : docs;
 
   const posts: PostWithRelations[] = pageDocs.map((doc) => {
-    const author = toRawUser(doc.author);
+    const author = rawPublicUser(doc.author);
     const replyToDoc = isDoc(doc.replyToDoc) ? doc.replyToDoc : null;
     const replyToAuthor = isDoc(doc.replyToAuthor) ? doc.replyToAuthor : null;
     return {
@@ -124,7 +125,10 @@ export async function homeTimeline(
   ];
   const originals =
     repostIds.length > 0
-      ? await db.post.findMany({ where: { id: { in: repostIds } }, include: postInclude })
+      ? await db.post.findMany({
+          where: { id: { in: repostIds }, deletedAt: null },
+          include: postInclude,
+        })
       : [];
   const originalsById = new Map(originals.map((post) => [post.id, post]));
   for (const post of posts) {
@@ -140,15 +144,4 @@ export async function homeTimeline(
 
 function isDoc(value: unknown): value is RawDoc {
   return !!value && typeof value === "object";
-}
-
-function toRawUser(value: unknown): PublicUser {
-  const doc = isDoc(value) ? value : {};
-  return {
-    id: rawObjectId(doc._id) ?? "",
-    handle: rawString(doc.handle),
-    name: rawString(doc.name),
-    image: typeof doc.image === "string" ? doc.image : null,
-    bio: rawString(doc.bio),
-  };
 }
