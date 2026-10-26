@@ -15,7 +15,7 @@ export async function postsByHashtag(
   const limit = options.limit ?? 20;
   const normalized = tag.toLowerCase().replace(/^#/, "");
   const posts = await db.post.findMany({
-    where: { hashtags: { has: normalized }, deletedAt: { isSet: false } },
+    where: { hashtags: { has: normalized }, deletedAt: null },
     include: postInclude,
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: limit + 1,

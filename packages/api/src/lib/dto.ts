@@ -87,7 +87,7 @@ export async function hydratePosts(
           select: { postId: true },
         }),
         db.post.findMany({
-          where: { authorId: viewerId, repostOfId: { in: targetIds }, deletedAt: { isSet: false } },
+          where: { authorId: viewerId, repostOfId: { in: targetIds }, deletedAt: null },
           select: { repostOfId: true },
         }),
       ])

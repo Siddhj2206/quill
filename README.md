@@ -1,120 +1,136 @@
-# quill
+# Quill
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, Self, TRPC, and more.
+A small Twitter-style microblogging app built on the Better-T-Stack scaffold:
+Next.js, tRPC, Better Auth, Prisma with MongoDB, bun and Turborepo. The data
+layer is also a NoSQL case study: the ten queries in `packages/api/src/queries`
+are real code used by the screens, and the schema decisions are written down in
+[`docs/schema.md`](docs/schema.md) and [`docs/queries.md`](docs/queries.md).
 
-## Features
+## Requirements
 
-- **TypeScript** - For type safety and improved developer experience
-- **Next.js** - Full-stack React framework
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **Shared UI package** - shadcn/ui primitives live in `packages/ui`
-- **tRPC** - End-to-end type-safe APIs
-- **Prisma** - TypeScript-first ORM
-- **MongoDB** - Database engine
-- **Authentication** - Better-Auth
-- **Oxlint** - Oxlint + Oxfmt (linting & formatting)
-- **Turborepo** - Optimized monorepo build system
+- [bun](https://bun.sh) 1.4+
+- Docker (for the local MongoDB replica set)
+- A MongoDB database with a replica set (Atlas clusters are replica sets by
+  default). Quill uses transactions for counter updates, so a standalone
+  `mongod` will not work.
 
-## Getting Started
-
-First, install the dependencies:
+## Setup
 
 ```bash
 bun install
 ```
 
-## Database Setup
-
-Generate the Prisma client before development, typechecking, or building, including in CI and deployment builds. Run this again after changing the Prisma schema:
+Start MongoDB as a single-node replica set:
 
 ```bash
-bun run db:generate
+docker compose up -d
+docker exec quill-mongo mongosh --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]})'
 ```
 
-This project uses MongoDB with Prisma.
+The replica set advertises `localhost:27017`, which is the address the app uses.
+If port 27017 is already taken, change the port in `docker-compose.yml` and in
+`DATABASE_URL`, and update the host in `rs.initiate`.
 
-1. Make sure you have MongoDB set up.
-2. Update your `apps/web/.env` file with your MongoDB connection URI.
+Create the environment file:
 
-3. Apply the schema to your database:
+```bash
+cp apps/web/.env.example apps/web/.env
+```
+
+Set `BETTER_AUTH_SECRET` to at least 32 characters, e.g.
+`openssl rand -base64 32`.
+
+Apply the schema and seed data:
 
 ```bash
 bun run db:push
+bun run db:seed
 ```
 
-Then, run the development server:
+`db:seed` wipes the database first, then recreates it. It is safe to run again.
+All seeded accounts share the password `quill12345`; sign in as
+`demo@quill.dev` to see a populated home timeline. Other accounts use
+`<handle>@quill.dev`, for example `mira@quill.dev`.
+
+Run the app:
 
 ```bash
 bun run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the fullstack application.
+Open <http://localhost:3001>.
 
-## UI Customization
+### Clean-clone check
 
-React web apps in this stack share shadcn/ui primitives through `packages/ui`.
-
-- Change design tokens and global styles in `packages/ui/src/styles/globals.css`
-- Update shared primitives in `packages/ui/src/components/*`
-- Adjust shadcn aliases or style config in `packages/ui/components.json` and `apps/web/components.json`
-
-### Add more shared components
-
-Run this from the project root to add more primitives to the shared UI package:
+With MongoDB running and `apps/web/.env` containing `DATABASE_URL`,
+`BETTER_AUTH_SECRET` and `BETTER_AUTH_URL`, this is the whole flow:
 
 ```bash
-npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
+bun install
+bun run db:push
+bun run db:seed
+bun run dev
 ```
 
-Import shared components like this:
+## Commands
 
-```tsx
-import { Button } from "@quill/ui/components/button";
+| Command               | What it does                                                  |
+| --------------------- | ------------------------------------------------------------- |
+| `bun run dev`         | Start the Next.js app on port 3001                            |
+| `bun run build`       | Production build                                              |
+| `bun run lint`        | Oxlint                                                        |
+| `bun run check-types` | TypeScript across all packages                                |
+| `bun run check`       | Oxlint plus Oxfmt                                             |
+| `bun run db:push`     | Push the Prisma schema and indexes (no migrations on MongoDB) |
+| `bun run db:generate` | Regenerate the Prisma client                                  |
+| `bun run db:seed`     | Wipe and recreate the seed data                               |
+| `bun run queries`     | Run all 10 case-study queries and print pipelines + results   |
+| `bun run db:studio`   | Prisma Studio                                                 |
+
+## Database notes
+
+- MongoDB uses `prisma db push`; there are no migration files.
+- Transactions require a replica set. The compose setup starts one.
+- Better Auth's ids are generated as 24-character ObjectIds because every
+  Prisma model uses `@db.ObjectId`.
+- `prisma db push` creates the collections and indexes declared in
+  `packages/db/prisma/schema`.
+- `bun run auth:generate` regenerates `auth.prisma` from the Better Auth config.
+  The committed file is hand-extended with `handle`, `bio`, counters and
+  relations, so review that command's output before accepting it.
+
+## Project layout
+
+```
+apps/web/                 Next.js app (App Router, tRPC client, sidebar shell)
+packages/api/             tRPC routers, query functions, DTO helpers
+  src/queries/            one file per case-study query
+packages/auth/            Better Auth config (handle field, ObjectId ids)
+packages/db/              Prisma schema, generated client
+packages/ui/              shared shadcn/ui components and theme
+scripts/seed.ts           deterministic seed data
+scripts/run-queries.ts    case-study query runner
+docs/schema.md            model and index rationale
+docs/queries.md           each query with a mongosh version and screen
+docs/decisions.md         one-line implementation decisions
 ```
 
-### Add app-specific blocks
+## Screens
 
-If you want to add app-specific blocks instead of shared primitives, run the shadcn CLI from `apps/web`.
+- `/home` — posts from people you follow plus your own, infinite scroll (C1)
+- `/explore` — search, trending (C2), who to follow (C3), active accounts (C4),
+  and the latest posts (S3)
+- `/notifications` — likes, reposts, replies, follows and mentions; mark all read
+- `/[handle]` — profile header with counts (S5), follow button, Posts (S1),
+  Replies and Likes tabs, posting activity chart (C5)
+- `/post/[id]` — a post and its replies
+- `/hashtag/[tag]` — posts for one hashtag (S2)
+- `/login`, `/signup` — Better Auth email/password
 
-## Environment Configuration
+## Case-study queries
 
-Each app owns its environment schema in `.env.schema`. Varlock generates `src/env.ts` during installation; run `bun run env:generate` after changing a schema. Commit schemas, and keep secrets in ignored env files or your deployment platform.
-
-Import the generated `ENV` accessor in application code. Shared database and auth packages receive configuration or initialized clients from the application. See [Varlock's monorepo guide](https://varlock.dev/guides/monorepos/).
-
-Bun's automatic env loading is disabled in `bunfig.toml`; the framework integration or server bootstrap loads Varlock. Node deployments must include Varlock and its dependencies alongside the app schema.
-
-Run standalone Node/Bun tools that use Varlock from the owning app directory so they load that app's schema and env files. `env:generate` only generates TypeScript files; it does not initialize environment values in a subsequent command.
-
-## Git Hooks and Formatting
-
-- Run checks: `bun run check`
-
-## Project Structure
-
-```
-quill/
-├── apps/
-│   └── web/         # Fullstack application (Next.js)
-├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
-│   ├── api/         # API layer / business logic
-│   ├── auth/        # Authentication configuration & logic
-│   └── db/          # Database schema & queries
-```
-
-## Available Scripts
-
-- `bun run dev`: Start all applications in development mode
-- `bun run build`: Build all applications
-- `bun run dev:web`: Start only the web application
-- `bun run check-types`: Check TypeScript types across all apps
-- `bun run db:push`: Push schema changes to database
-- `bun run db:generate`: Generate database client/types
-- `bun run db:migrate`: Run database migrations
-- `bun run db:studio`: Open database studio UI
-- `bun run check`: Run Oxlint and Oxfmt
-
-## Better Auth Schema Generation
-
-After changing auth plugins or schema options, run `bun run auth:generate` from the project root. The script runs the Better Auth CLI through `varlock run` from the owning app directory, loading the auth instance from `src/services.ts`. Review the schema changes, then use your ORM's migration workflow to apply them.
+Simple queries use Prisma model calls. The complex five use
+`aggregateRaw` pipelines so the raw stages are visible and can be copied into
+mongosh or Compass. Each function has a doc comment with its plain-English
+question and the screen that uses it. See [`docs/queries.md`](docs/queries.md)
+and run `bun run queries` for the full output.

@@ -10,6 +10,7 @@ import {
 } from "../lib/notifications";
 import { parseHashtags, parseMentions, POST_TEXT_MAX } from "../lib/text";
 import { homeTimeline } from "../queries/c1-home-timeline";
+import { trendingHashtags } from "../queries/c2-trending-hashtags";
 import { postsByHashtag } from "../queries/s2-posts-by-hashtag";
 import { postsByUser } from "../queries/s1-posts-by-user";
 import { tenMostRecentPosts } from "../queries/s3-ten-most-recent-posts";
@@ -36,7 +37,7 @@ export const postsRouter = router({
       const post = await ctx.db.$transaction(async (tx) => {
         const parent = input.replyToId
           ? await tx.post.findFirst({
-              where: { id: input.replyToId, deletedAt: { isSet: false } },
+              where: { id: input.replyToId, deletedAt: null },
               include: { author: { select: { id: true, handle: true } } },
             })
           : null;
@@ -51,6 +52,8 @@ export const postsRouter = router({
             hashtags,
             mentions,
             replyToId: parent?.id ?? null,
+            repostOfId: null,
+            deletedAt: null,
           },
         });
 
@@ -108,10 +111,13 @@ export const postsRouter = router({
           : null,
       ]);
 
-      await tx.user.update({
-        where: { id: post.authorId },
-        data: { postCount: Math.max(0, (author?.postCount ?? 1) - 1) },
-      });
+      // postCount counts originals and replies, not repost rows.
+      if (!post.repostOfId) {
+        await tx.user.update({
+          where: { id: post.authorId },
+          data: { postCount: Math.max(0, (author?.postCount ?? 1) - 1) },
+        });
+      }
       if (post.replyToId && parent) {
         await tx.post.update({
           where: { id: post.replyToId },
@@ -132,7 +138,7 @@ export const postsRouter = router({
 
   like: protectedProcedure.input(objectId).mutation(async ({ ctx, input }) => {
     const viewerId = ctx.session.user.id;
-    const post = await ctx.db.post.findFirst({ where: { id: input, deletedAt: { isSet: false } } });
+    const post = await ctx.db.post.findFirst({ where: { id: input, deletedAt: null } });
     if (!post) throw new TRPCError({ code: "NOT_FOUND", message: "That post no longer exists." });
 
     const targetId = post.repostOfId ?? post.id;
@@ -140,7 +146,7 @@ export const postsRouter = router({
       targetId === post.id
         ? post
         : await ctx.db.post.findFirst({
-            where: { id: targetId, deletedAt: { isSet: false } },
+            where: { id: targetId, deletedAt: null },
           });
     if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "That post no longer exists." });
 
@@ -172,7 +178,7 @@ export const postsRouter = router({
 
   unlike: protectedProcedure.input(objectId).mutation(async ({ ctx, input }) => {
     const viewerId = ctx.session.user.id;
-    const post = await ctx.db.post.findFirst({ where: { id: input, deletedAt: { isSet: false } } });
+    const post = await ctx.db.post.findFirst({ where: { id: input, deletedAt: null } });
     if (!post) return { id: input };
     const targetId = post.repostOfId ?? post.id;
 
@@ -206,18 +212,26 @@ export const postsRouter = router({
 
   repost: protectedProcedure.input(objectId).mutation(async ({ ctx, input }) => {
     const viewerId = ctx.session.user.id;
-    const post = await ctx.db.post.findFirst({ where: { id: input, deletedAt: { isSet: false } } });
+    const post = await ctx.db.post.findFirst({ where: { id: input, deletedAt: null } });
     if (!post) throw new TRPCError({ code: "NOT_FOUND", message: "That post no longer exists." });
     const targetId = post.repostOfId ?? post.id;
 
     const existing = await ctx.db.post.findFirst({
-      where: { authorId: viewerId, repostOfId: targetId, deletedAt: { isSet: false } },
+      where: { authorId: viewerId, repostOfId: targetId, deletedAt: null },
     });
     if (existing) return { id: existing.id };
 
     const repost = await ctx.db.$transaction(async (tx) => {
       const created = await tx.post.create({
-        data: { authorId: viewerId, text: "", hashtags: [], mentions: [], repostOfId: targetId },
+        data: {
+          authorId: viewerId,
+          text: "",
+          hashtags: [],
+          mentions: [],
+          replyToId: null,
+          repostOfId: targetId,
+          deletedAt: null,
+        },
       });
       await tx.post.update({
         where: { id: targetId },
@@ -243,12 +257,12 @@ export const postsRouter = router({
 
   undoRepost: protectedProcedure.input(objectId).mutation(async ({ ctx, input }) => {
     const viewerId = ctx.session.user.id;
-    const post = await ctx.db.post.findFirst({ where: { id: input, deletedAt: { isSet: false } } });
+    const post = await ctx.db.post.findFirst({ where: { id: input, deletedAt: null } });
     if (!post) return { id: input };
     const targetId = post.repostOfId ?? post.id;
 
     const repost = await ctx.db.post.findFirst({
-      where: { authorId: viewerId, repostOfId: targetId, deletedAt: { isSet: false } },
+      where: { authorId: viewerId, repostOfId: targetId, deletedAt: null },
     });
     if (!repost) return { id: targetId };
 
@@ -283,6 +297,10 @@ export const postsRouter = router({
 
   latest: publicProcedure.query(async ({ ctx }) => {
     return tenMostRecentPosts(ctx.db, { viewerId: ctx.session?.user.id });
+  }),
+
+  trending: publicProcedure.query(async ({ ctx }) => {
+    return trendingHashtags(ctx.db);
   }),
 
   byHashtag: publicProcedure
@@ -338,7 +356,7 @@ export const postsRouter = router({
       if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "No user with that handle." });
       const limit = input.limit ?? 20;
       const posts = await ctx.db.post.findMany({
-        where: { authorId: user.id, deletedAt: { isSet: false }, replyToId: { not: null } },
+        where: { authorId: user.id, deletedAt: null, replyToId: { not: null } },
         include: postInclude,
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: limit + 1,
@@ -368,7 +386,7 @@ export const postsRouter = router({
       if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "No user with that handle." });
       const limit = input.limit ?? 20;
       const likes = await ctx.db.like.findMany({
-        where: { userId: user.id, post: { deletedAt: { isSet: false } } },
+        where: { userId: user.id, post: { deletedAt: null } },
         include: { post: { include: postInclude } },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: limit + 1,
@@ -388,12 +406,12 @@ export const postsRouter = router({
 
   get: publicProcedure.input(objectId).query(async ({ ctx, input }) => {
     const post = await ctx.db.post.findFirst({
-      where: { id: input, deletedAt: { isSet: false } },
+      where: { id: input, deletedAt: null },
       include: postInclude,
     });
     if (!post) throw new TRPCError({ code: "NOT_FOUND", message: "That post no longer exists." });
     const replies = await ctx.db.post.findMany({
-      where: { replyToId: post.id, deletedAt: { isSet: false } },
+      where: { replyToId: post.id, deletedAt: null },
       include: postInclude,
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       take: 100,

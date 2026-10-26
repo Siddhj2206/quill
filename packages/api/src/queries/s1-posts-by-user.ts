@@ -14,7 +14,7 @@ export async function postsByUser(
 ): Promise<Page<PostDto>> {
   const limit = options.limit ?? 20;
   const posts = await db.post.findMany({
-    where: { authorId: userId, deletedAt: { isSet: false }, replyToId: null },
+    where: { authorId: userId, deletedAt: null, replyToId: null },
     include: postInclude,
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: limit + 1,

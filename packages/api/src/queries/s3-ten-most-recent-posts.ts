@@ -12,7 +12,7 @@ export async function tenMostRecentPosts(
   options: { viewerId?: string | null; limit?: number } = {},
 ): Promise<PostDto[]> {
   const posts = await db.post.findMany({
-    where: { deletedAt: { isSet: false } },
+    where: { deletedAt: null },
     include: postInclude,
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: options.limit ?? 10,

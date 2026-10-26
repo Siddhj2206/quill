@@ -296,6 +296,8 @@ async function seedPosts(users: SeededUser[]) {
         hashtags,
         mentions,
         replyToId: replyTo?.id ?? null,
+        repostOfId: null,
+        deletedAt: null,
         createdAt,
       },
     });
@@ -322,7 +324,9 @@ async function seedPosts(users: SeededUser[]) {
         text: "",
         hashtags: [],
         mentions: [],
+        replyToId: null,
         repostOfId: original.id,
+        deletedAt: null,
         createdAt,
       },
     });
@@ -448,7 +452,9 @@ async function recomputeCounts() {
     const [followerCount, followingCount, postCount] = await Promise.all([
       db.follow.count({ where: { followingId: user.id } }),
       db.follow.count({ where: { followerId: user.id } }),
-      db.post.count({ where: { authorId: user.id, deletedAt: { isSet: false } } }),
+      db.post.count({
+        where: { authorId: user.id, repostOfId: null, deletedAt: null },
+      }),
     ]);
     await db.user.update({
       where: { id: user.id },
@@ -460,8 +466,8 @@ async function recomputeCounts() {
   for (const post of posts) {
     const [likeCount, replyCount, repostCount] = await Promise.all([
       db.like.count({ where: { postId: post.id } }),
-      db.post.count({ where: { replyToId: post.id, deletedAt: { isSet: false } } }),
-      db.post.count({ where: { repostOfId: post.id, deletedAt: { isSet: false } } }),
+      db.post.count({ where: { replyToId: post.id, deletedAt: null } }),
+      db.post.count({ where: { repostOfId: post.id, deletedAt: null } }),
     ]);
     await db.post.update({
       where: { id: post.id },
@@ -492,7 +498,9 @@ async function verifyCounts() {
     const [followerCount, followingCount, postCount] = await Promise.all([
       db.follow.count({ where: { followingId: user.id } }),
       db.follow.count({ where: { followerId: user.id } }),
-      db.post.count({ where: { authorId: user.id, deletedAt: { isSet: false } } }),
+      db.post.count({
+        where: { authorId: user.id, repostOfId: null, deletedAt: null },
+      }),
     ]);
     if (user.followerCount !== followerCount) {
       problems.push(`@${user.handle}: followerCount ${user.followerCount} != ${followerCount}`);
@@ -508,8 +516,8 @@ async function verifyCounts() {
   for (const post of posts) {
     const [likeCount, replyCount, repostCount] = await Promise.all([
       db.like.count({ where: { postId: post.id } }),
-      db.post.count({ where: { replyToId: post.id, deletedAt: { isSet: false } } }),
-      db.post.count({ where: { repostOfId: post.id, deletedAt: { isSet: false } } }),
+      db.post.count({ where: { replyToId: post.id, deletedAt: null } }),
+      db.post.count({ where: { repostOfId: post.id, deletedAt: null } }),
     ]);
     if (
       post.likeCount !== likeCount ||

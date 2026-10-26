@@ -11,3 +11,4 @@ One line per decision, kept in the order they were made.
 - Turbo's `db:push` task is non-interactive, so `bun run db:push` also works in a non-TTY shell.
 - The app shell is a single root layout with the shadcn sidebar; auth pages render inside the same shell so logged-out visitors see the Explore/Log in/Sign up sidebar.
 - Composing is a global dialog provided by a client context, so the sidebar Post button and every reply button share one form.
+- Post creates always write `replyToId`, `repostOfId` and `deletedAt` explicitly (null when empty), because Prisma's MongoDB `null` filter does not match absent fields.

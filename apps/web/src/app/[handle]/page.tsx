@@ -1,10 +1,10 @@
-import { PageShell } from "@/components/page-shell";
+import { ProfileView } from "./profile-view";
 
 export default async function ProfilePage({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
   return (
-    <PageShell title={`@${handle}`}>
-      <p className="text-muted-foreground">No posts yet.</p>
-    </PageShell>
+    <div className="mx-auto w-full max-w-2xl">
+      <ProfileView handle={handle.toLowerCase()} />
+    </div>
   );
 }

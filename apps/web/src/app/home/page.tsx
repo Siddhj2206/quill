@@ -1,15 +1,16 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { PageShell } from "@/components/page-shell";
 import { auth } from "@/services";
+import { HomeFeed } from "./home-feed";
 
 export default async function HomePage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/login");
   return (
-    <PageShell title="Home">
-      <p className="text-muted-foreground">No posts yet.</p>
-    </PageShell>
+    <div className="mx-auto flex w-full max-w-2xl flex-col">
+      <h1 className="border-b px-4 py-3 text-base font-medium">Home</h1>
+      <HomeFeed />
+    </div>
   );
 }
