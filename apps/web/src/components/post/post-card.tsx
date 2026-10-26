@@ -27,7 +27,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { useCompose } from "@/components/compose/compose-provider";
 import { TimeAgo } from "@/components/time-ago";
 import { UserAvatar } from "@/components/user-avatar";
 import { authClient } from "@/lib/auth-client";
@@ -41,7 +40,6 @@ export function PostCard({ post, clickable = true }: { post: PostDto; clickable?
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
-  const { openCompose } = useCompose();
 
   const display = post.repostOf ?? post;
   const isRepost = post.repostOf !== null;
@@ -269,11 +267,11 @@ export function PostCard({ post, clickable = true }: { post: PostDto; clickable?
             variant="ghost"
             size="sm"
             className="text-muted-foreground hover:text-foreground"
-            onClick={() => openCompose({ id: display.id, handle: display.author.handle })}
+            onClick={() => router.push(detailHref)}
           >
             <MessageCircleIcon data-icon="inline-start" />
             <span>{display.replyCount}</span>
-            <span className="sr-only">Reply</span>
+            <span className="sr-only">View replies</span>
           </Button>
 
           <Button

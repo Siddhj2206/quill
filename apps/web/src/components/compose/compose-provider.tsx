@@ -12,10 +12,10 @@ import { createContext, useCallback, useContext, useMemo, useState } from "react
 
 import { authClient } from "@/lib/auth-client";
 
-import { PostComposerForm, type ReplyTarget } from "./post-composer";
+import { PostComposerForm } from "./post-composer";
 
 type ComposeContextValue = {
-  openCompose: (replyTo?: ReplyTarget) => void;
+  openCompose: () => void;
 };
 
 const ComposeContext = createContext<ComposeContextValue | null>(null);
@@ -30,45 +30,27 @@ export function ComposeProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { data: session } = authClient.useSession();
   const [open, setOpen] = useState(false);
-  const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
 
-  const openCompose = useCallback(
-    (target?: ReplyTarget) => {
-      if (!session) {
-        router.push("/login");
-        return;
-      }
-      setReplyTo(target ?? null);
-      setOpen(true);
-    },
-    [router, session],
-  );
+  const openCompose = useCallback(() => {
+    if (!session) {
+      router.push("/login");
+      return;
+    }
+    setOpen(true);
+  }, [router, session]);
 
   const value = useMemo(() => ({ openCompose }), [openCompose]);
 
   return (
     <ComposeContext.Provider value={value}>
       {children}
-      <Dialog
-        open={open}
-        onOpenChange={(next) => {
-          setOpen(next);
-          if (!next) setReplyTo(null);
-        }}
-      >
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{replyTo ? "Reply" : "New post"}</DialogTitle>
-            <DialogDescription>
-              {replyTo ? `Replying to @${replyTo.handle}.` : "Up to 280 characters."}
-            </DialogDescription>
+            <DialogTitle>New post</DialogTitle>
+            <DialogDescription>Up to 280 characters.</DialogDescription>
           </DialogHeader>
-          <PostComposerForm
-            replyTo={replyTo ?? undefined}
-            autoFocus
-            onSuccess={() => setOpen(false)}
-            className="border-0 p-0"
-          />
+          <PostComposerForm autoFocus onSuccess={() => setOpen(false)} className="border-0 p-0" />
         </DialogContent>
       </Dialog>
     </ComposeContext.Provider>
