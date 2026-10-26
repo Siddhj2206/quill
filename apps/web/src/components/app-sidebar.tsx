@@ -23,9 +23,19 @@ import {
   SidebarRail,
   useSidebar,
 } from "@quill/ui/components/sidebar";
-import { Skeleton } from "@quill/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { BellIcon, CompassIcon, HomeIcon, LogInIcon, PenLineIcon, UserIcon } from "lucide-react";
+import {
+  BellIcon,
+  ChevronsUpDownIcon,
+  CompassIcon,
+  FeatherIcon,
+  HomeIcon,
+  LogInIcon,
+  LogOutIcon,
+  PenLineIcon,
+  UserIcon,
+  UserPlusIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -41,9 +51,8 @@ export function AppSidebar() {
   const trpc = useTRPC();
   const { data: session, isPending } = authClient.useSession();
   const { openCompose } = useCompose();
-  const { setOpenMobile } = useSidebar();
+  const { setOpenMobile, isMobile } = useSidebar();
 
-  // The mobile sidebar is a sheet; close it when navigation finishes.
   useEffect(() => {
     setOpenMobile(false);
   }, [pathname, setOpenMobile]);
@@ -58,12 +67,19 @@ export function AppSidebar() {
   const profileHref = user ? (`/${user.handle}` as const) : "/login";
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon" className="bg-background">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href={user ? "/home" : "/explore"} />}>
-              <span className="text-sm font-medium">Quill</span>
+            <SidebarMenuButton
+              size="lg"
+              render={<Link href={user ? "/home" : "/explore"} />}
+              tooltip="Quill"
+            >
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <FeatherIcon />
+              </div>
+              <span className="truncate text-base font-semibold">Quill</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -73,11 +89,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {isPending ? (
-                <SidebarMenuItem>
-                  <Skeleton className="h-8 w-full" />
-                </SidebarMenuItem>
-              ) : user ? (
+              {user ? (
                 <>
                   <SidebarMenuItem>
                     <SidebarMenuButton
@@ -122,12 +134,6 @@ export function AppSidebar() {
                       <span>Profile</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton onClick={() => openCompose()} tooltip="Post">
-                      <PenLineIcon />
-                      <span>Post</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
                 </>
               ) : (
                 <>
@@ -141,45 +147,79 @@ export function AppSidebar() {
                       <span>Explore</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton render={<Link href="/login" />}>
-                      <LogInIcon />
-                      <span>Log in</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton render={<Link href="/signup" />}>
-                      <span>Sign up</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
                 </>
               )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {user ? (
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip="Post"
+                    onClick={() => openCompose()}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                  >
+                    <PenLineIcon />
+                    <span>Post</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
       </SidebarContent>
 
       <SidebarFooter>
-        {isPending ? (
-          <Skeleton className="h-12 w-full" />
-        ) : user ? (
+        {isPending ? null : user ? (
           <SidebarMenu>
             <SidebarMenuItem>
               <DropdownMenu>
-                <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
+                <DropdownMenuTrigger
+                  render={
+                    <SidebarMenuButton
+                      size="lg"
+                      className="data-open:bg-sidebar-accent data-open:text-sidebar-accent-foreground"
+                    />
+                  }
+                >
                   <UserAvatar name={user.name} handle={user.handle} image={user.image ?? null} />
                   <div className="grid flex-1 text-left leading-tight">
-                    <span className="truncate font-medium">{user.name}</span>
-                    <span className="truncate text-muted-foreground">@{user.handle}</span>
+                    <span className="truncate text-sm font-medium">{user.name}</span>
+                    <span className="truncate text-xs text-muted-foreground">@{user.handle}</span>
                   </div>
+                  <ChevronsUpDownIcon className="ml-auto" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" align="start" className="w-56">
+                <DropdownMenuContent
+                  className="w-56"
+                  side={isMobile ? "bottom" : "right"}
+                  align="end"
+                  sideOffset={4}
+                >
                   <DropdownMenuGroup>
-                    <DropdownMenuLabel>@{user.handle}</DropdownMenuLabel>
+                    <DropdownMenuLabel className="p-0 font-normal">
+                      <div className="flex items-center gap-2 px-1 py-1.5">
+                        <UserAvatar
+                          name={user.name}
+                          handle={user.handle}
+                          image={user.image ?? null}
+                        />
+                        <div className="grid flex-1 text-left text-sm leading-tight">
+                          <span className="truncate font-medium">{user.name}</span>
+                          <span className="truncate text-xs text-muted-foreground">
+                            @{user.handle}
+                          </span>
+                        </div>
+                      </div>
+                    </DropdownMenuLabel>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
                     <DropdownMenuItem render={<Link href={profileHref} />}>
+                      <UserIcon />
                       Profile
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -194,6 +234,7 @@ export function AppSidebar() {
                         });
                       }}
                     >
+                      <LogOutIcon />
                       Sign out
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
@@ -201,7 +242,26 @@ export function AppSidebar() {
               </DropdownMenu>
             </SidebarMenuItem>
           </SidebarMenu>
-        ) : null}
+        ) : (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton render={<Link href="/login" />} tooltip="Log in">
+                <LogInIcon />
+                <span>Log in</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<Link href="/signup" />}
+                tooltip="Sign up"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+              >
+                <UserPlusIcon />
+                <span>Sign up</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

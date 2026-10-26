@@ -3,6 +3,7 @@
 import { Button } from "@quill/ui/components/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
@@ -23,13 +24,21 @@ export function FollowButton({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
+  const [following, setFollowing] = useState(isFollowing);
+
+  useEffect(() => {
+    setFollowing(isFollowing);
+  }, [isFollowing]);
 
   const follow = useMutation(
     trpc.users.follow.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries();
       },
-      onError: (error) => toast.error(error.message),
+      onError: (error) => {
+        setFollowing(false);
+        toast.error(error.message);
+      },
     }),
   );
   const unfollow = useMutation(
@@ -37,7 +46,10 @@ export function FollowButton({
       onSuccess: async () => {
         await queryClient.invalidateQueries();
       },
-      onError: (error) => toast.error(error.message),
+      onError: (error) => {
+        setFollowing(true);
+        toast.error(error.message);
+      },
     }),
   );
 
@@ -48,18 +60,20 @@ export function FollowButton({
   return (
     <Button
       size={size}
-      variant={isFollowing ? "outline" : "default"}
+      variant={following ? "outline" : "default"}
       disabled={pending}
       onClick={() => {
         if (!session) {
           router.push("/login");
           return;
         }
-        if (isFollowing) unfollow.mutate(handle);
-        else follow.mutate(handle);
+        const next = !following;
+        setFollowing(next);
+        if (next) follow.mutate(handle);
+        else unfollow.mutate(handle);
       }}
     >
-      {isFollowing ? "Following" : "Follow"}
+      {following ? "Following" : "Follow"}
     </Button>
   );
 }

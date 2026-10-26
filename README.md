@@ -119,15 +119,23 @@ docs/decisions.md         one-line implementation decisions
 
 ## Screens
 
-- `/home` — posts from people you follow plus your own, infinite scroll (C1)
-- `/explore` — search, trending (C2), who to follow (C3), active accounts (C4),
-  and the latest posts (S3)
+The app shell is three columns on desktop: the navigation sidebar, the post
+feed, and a right sidebar with search and discovery cards. The right sidebar is
+hidden on smaller screens, where search moves to the top of Explore and the
+discovery cards move below it.
+
+- `/home` — posts from people you follow plus your own, with the composer and
+  refresh action
+- `/explore` — latest original posts (S3); search lives in the right sidebar on
+  desktop and at the top of the page on mobile. The right sidebar also carries
+  trending (C2), who to follow (C3) and active accounts (C4)
 - `/notifications` — likes, reposts, replies, follows and mentions; mark all read
 - `/[handle]` — profile header with counts (S5), follow button, Posts (S1),
   Replies and Likes tabs, posting activity chart (C5)
 - `/post/[id]` — a post and its replies
 - `/hashtag/[tag]` — posts for one hashtag (S2)
-- `/login`, `/signup` — Better Auth email/password
+- `/login`, `/signup` — Better Auth email/password; the logged-out sidebar puts
+  Log in and Sign up in the footer
 
 ## Case-study queries
 

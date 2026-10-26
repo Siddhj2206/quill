@@ -1,7 +1,13 @@
 "use client";
 
 import { Button } from "@quill/ui/components/button";
-import { Empty, EmptyHeader, EmptyTitle } from "@quill/ui/components/empty";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@quill/ui/components/empty";
 import { Skeleton } from "@quill/ui/components/skeleton";
 import { useEffect, useRef } from "react";
 
@@ -25,7 +31,34 @@ type PostFeedQuery = {
   refetch: () => unknown;
 };
 
-export function PostFeed({ query, emptyText }: { query: PostFeedQuery; emptyText: string }) {
+function PostSkeleton() {
+  return (
+    <div className="flex gap-3 border-b border-border px-4 py-4 last:border-b-0">
+      <Skeleton className="size-10 shrink-0 rounded-full" />
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex gap-2">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-4/5" />
+        <Skeleton className="mt-1 h-6 w-40" />
+      </div>
+    </div>
+  );
+}
+
+export function PostFeed({
+  query,
+  emptyText,
+  emptyDescription,
+  emptyAction,
+}: {
+  query: PostFeedQuery;
+  emptyText: string;
+  emptyDescription?: string;
+  emptyAction?: React.ReactNode;
+}) {
   const sentinel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,7 +70,7 @@ export function PostFeed({ query, emptyText }: { query: PostFeedQuery; emptyText
           void query.fetchNextPage();
         }
       },
-      { rootMargin: "300px" },
+      { rootMargin: "400px" },
     );
     observer.observe(element);
     return () => observer.disconnect();
@@ -45,22 +78,27 @@ export function PostFeed({ query, emptyText }: { query: PostFeedQuery; emptyText
 
   if (query.isPending) {
     return (
-      <div className="flex flex-col gap-3 p-4">
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-20 w-full" />
+      <div>
+        <PostSkeleton />
+        <PostSkeleton />
+        <PostSkeleton />
       </div>
     );
   }
 
   if (query.isError) {
     return (
-      <div className="flex flex-col items-start gap-2 p-4">
-        <p className="text-muted-foreground">Could not load posts.</p>
-        <Button variant="outline" size="sm" onClick={() => void query.refetch()}>
-          Try again
-        </Button>
-      </div>
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>Could not load posts.</EmptyTitle>
+          <EmptyDescription>Check your connection and try again.</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button variant="outline" size="sm" onClick={() => void query.refetch()}>
+            Try again
+          </Button>
+        </EmptyContent>
+      </Empty>
     );
   }
 
@@ -71,7 +109,9 @@ export function PostFeed({ query, emptyText }: { query: PostFeedQuery; emptyText
       <Empty>
         <EmptyHeader>
           <EmptyTitle>{emptyText}</EmptyTitle>
+          {emptyDescription ? <EmptyDescription>{emptyDescription}</EmptyDescription> : null}
         </EmptyHeader>
+        {emptyAction ? <EmptyContent>{emptyAction}</EmptyContent> : null}
       </Empty>
     );
   }
@@ -83,7 +123,10 @@ export function PostFeed({ query, emptyText }: { query: PostFeedQuery; emptyText
       ))}
       <div ref={sentinel} className="h-8" />
       {query.isFetchingNextPage ? (
-        <p className="p-2 text-center text-muted-foreground">Loading more posts.</p>
+        <>
+          <PostSkeleton />
+          <PostSkeleton />
+        </>
       ) : null}
     </div>
   );

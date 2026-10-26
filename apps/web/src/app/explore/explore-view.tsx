@@ -1,180 +1,102 @@
 "use client";
 
-import { Badge } from "@quill/ui/components/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@quill/ui/components/card";
-import { Empty, EmptyHeader, EmptyTitle } from "@quill/ui/components/empty";
-import { Input } from "@quill/ui/components/input";
-import { Skeleton } from "@quill/ui/components/skeleton";
+import { Button } from "@quill/ui/components/button";
+import { ItemGroup } from "@quill/ui/components/item";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@quill/ui/components/tabs";
 import { useQuery } from "@tanstack/react-query";
 import type { Route } from "next";
 import Link from "next/link";
-import { useState } from "react";
 
-import { FollowButton } from "@/components/follow-button";
+import { DiscoverSections } from "@/components/discover";
+import { ListEmpty, ListSkeleton } from "@/components/list-states";
 import { PostCard } from "@/components/post/post-card";
+import { SearchForm } from "@/components/search-form";
 import { UserRow } from "@/components/user-row";
 import { useTRPC } from "@/utils/trpc";
 
-export function ExploreView() {
+export function ExploreView({ initialQuery }: { initialQuery: string }) {
   const trpc = useTRPC();
-  const [query, setQuery] = useState("");
-  const [submitted, setSubmitted] = useState("");
+  const searchActive = initialQuery.length > 0;
 
-  const trending = useQuery(trpc.posts.trending.queryOptions());
   const latest = useQuery(trpc.posts.latest.queryOptions());
-  const suggested = useQuery(trpc.users.suggested.queryOptions());
-  const active = useQuery(trpc.users.active.queryOptions());
   const search = useQuery({
-    ...trpc.search.search.queryOptions({ query: submitted }),
-    enabled: submitted.length > 0,
+    ...trpc.search.search.queryOptions({ query: initialQuery }),
+    enabled: searchActive,
   });
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          setSubmitted(query.trim());
-        }}
-      >
-        <Input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search users or #hashtags"
-          aria-label="Search users or hashtags"
-        />
-      </form>
+    <>
+      <div className="border-b border-border p-4 xl:hidden">
+        <SearchForm />
+      </div>
 
-      {submitted.length > 0 ? (
-        <div className="flex flex-col gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Users</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
+      {searchActive ? (
+        <div className="flex flex-col">
+          <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5">
+            <p className="min-w-0 truncate text-sm text-muted-foreground">
+              Results for <span className="font-medium text-foreground">“{initialQuery}”</span>
+            </p>
+            <Button variant="ghost" size="sm" render={<Link href={"/explore" as Route} />}>
+              Clear
+            </Button>
+          </div>
+
+          <Tabs defaultValue="users" className="gap-0">
+            <TabsList variant="line" className="w-full border-b px-4">
+              <TabsTrigger value="users">
+                Users{search.data ? ` (${search.data.users.length})` : ""}
+              </TabsTrigger>
+              <TabsTrigger value="posts">
+                Posts{search.data ? ` (${search.data.posts.length})` : ""}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="users">
               {search.isPending ? (
-                <Skeleton className="m-4 h-12" />
+                <ListSkeleton />
+              ) : search.isError ? (
+                <ListEmpty>Could not search users.</ListEmpty>
               ) : search.data && search.data.users.length > 0 ? (
-                search.data.users.map((user) => <UserRow key={user.id} user={user} />)
+                <ItemGroup className="gap-0 divide-y divide-border">
+                  {search.data.users.map((user) => (
+                    <UserRow key={user.id} user={user} />
+                  ))}
+                </ItemGroup>
               ) : (
-                <p className="p-4 text-muted-foreground">No users found.</p>
+                <ListEmpty>No users found.</ListEmpty>
               )}
-            </CardContent>
-          </Card>
+            </TabsContent>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Posts with #{submitted.replace(/^#/, "").toLowerCase()}</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
+            <TabsContent value="posts">
               {search.isPending ? (
-                <Skeleton className="m-4 h-20" />
+                <ListSkeleton rows={2} />
+              ) : search.isError ? (
+                <ListEmpty>Could not search posts.</ListEmpty>
               ) : search.data && search.data.posts.length > 0 ? (
                 search.data.posts.map((post) => <PostCard key={post.id} post={post} />)
               ) : (
-                <p className="p-4 text-muted-foreground">No posts found.</p>
+                <ListEmpty>No posts found.</ListEmpty>
               )}
-            </CardContent>
-          </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       ) : (
-        <>
-          <Card>
-            <CardHeader>
-              <CardTitle>Trending</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              {trending.isPending ? (
-                <Skeleton className="h-16 w-full" />
-              ) : trending.data && trending.data.length > 0 ? (
-                trending.data.map((tag) => (
-                  <div key={tag.tag} className="flex items-center justify-between gap-2">
-                    <Link href={`/hashtag/${tag.tag}` as Route} className="hover:underline">
-                      #{tag.tag}
-                    </Link>
-                    <Badge variant="secondary">{tag.count}</Badge>
-                  </div>
-                ))
-              ) : (
-                <p className="text-muted-foreground">No trending hashtags yet.</p>
-              )}
-            </CardContent>
-          </Card>
+        <div>
+          <div className="p-4 xl:hidden">
+            <DiscoverSections />
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Who to follow</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3 p-0">
-              {suggested.isPending ? (
-                <Skeleton className="m-4 h-16" />
-              ) : suggested.data && suggested.data.length > 0 ? (
-                suggested.data.map((entry) => (
-                  <div key={entry.user.id} className="flex items-center gap-2">
-                    <div className="min-w-0 flex-1">
-                      <UserRow user={entry.user} />
-                    </div>
-                    <div className="pr-4">
-                      <FollowButton
-                        handle={entry.user.handle}
-                        isFollowing={false}
-                        isViewer={false}
-                      />
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="p-4 text-muted-foreground">No suggestions yet.</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Active accounts</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3 p-0">
-              {active.isPending ? (
-                <Skeleton className="m-4 h-16" />
-              ) : active.data && active.data.length > 0 ? (
-                active.data.map((entry) => (
-                  <div key={entry.user.id} className="flex items-center justify-between gap-2 pr-4">
-                    <UserRow user={entry.user} />
-                    <div className="shrink-0 text-right text-muted-foreground">
-                      <p>{entry.engagementRate.toFixed(1)} per post</p>
-                      <p>{entry.postCount} posts</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="p-4 text-muted-foreground">No account activity yet.</p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Latest</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {latest.isPending ? (
-                <div className="flex flex-col gap-2 p-4">
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                </div>
-              ) : latest.data && latest.data.length > 0 ? (
-                latest.data.map((post) => <PostCard key={post.id} post={post} />)
-              ) : (
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyTitle>No posts yet.</EmptyTitle>
-                  </EmptyHeader>
-                </Empty>
-              )}
-            </CardContent>
-          </Card>
-        </>
+          {latest.isPending ? (
+            <ListSkeleton rows={3} />
+          ) : latest.isError ? (
+            <ListEmpty>Could not load posts.</ListEmpty>
+          ) : latest.data && latest.data.length > 0 ? (
+            latest.data.map((post) => <PostCard key={post.id} post={post} />)
+          ) : (
+            <ListEmpty>No posts yet.</ListEmpty>
+          )}
+        </div>
       )}
-    </div>
+    </>
   );
 }

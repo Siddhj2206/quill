@@ -1,10 +1,18 @@
+import { PageContainer, PageHeader } from "@/components/page";
 import { ExploreView } from "./explore-view";
 
-export default function ExplorePage() {
+export default async function ExplorePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const query = Array.isArray(params.q) ? (params.q[0] ?? "") : (params.q ?? "");
+
   return (
-    <div className="mx-auto w-full max-w-2xl">
-      <h1 className="border-b px-4 py-3 text-base font-medium">Explore</h1>
-      <ExploreView />
-    </div>
+    <PageContainer>
+      <PageHeader title="Explore" />
+      <ExploreView initialQuery={query.trim()} />
+    </PageContainer>
   );
 }

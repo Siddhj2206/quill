@@ -13,5 +13,11 @@ export function HashtagFeed({ tag }: { tag: string }) {
       { getNextPageParam: (lastPage) => lastPage.nextCursor },
     ),
   );
-  return <PostFeed query={query} emptyText="No posts with this hashtag yet." />;
+  return (
+    <PostFeed
+      query={query}
+      emptyText="No posts with this hashtag yet."
+      emptyDescription="Try another hashtag from Explore."
+    />
+  );
 }

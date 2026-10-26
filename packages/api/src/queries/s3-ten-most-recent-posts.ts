@@ -4,15 +4,18 @@ import { hydratePosts, postInclude } from "../lib/dto";
 import type { PostDto } from "../lib/types";
 
 /**
- * Question: What are the ten most recent posts from everyone?
+ * Question: What are the ten most recent original posts from everyone?
  * Screen: Explore page, latest posts section.
+ *
+ * Repost rows are excluded so the Explore feed is not a wall of the same
+ * original post. Reposts still appear in the home timeline and profiles.
  */
 export async function tenMostRecentPosts(
   db: Database,
   options: { viewerId?: string | null; limit?: number } = {},
 ): Promise<PostDto[]> {
   const posts = await db.post.findMany({
-    where: { deletedAt: null },
+    where: { deletedAt: null, repostOfId: null },
     include: postInclude,
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: options.limit ?? 10,

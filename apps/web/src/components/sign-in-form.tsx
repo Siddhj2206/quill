@@ -1,6 +1,13 @@
 "use client";
 
 import { Button } from "@quill/ui/components/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@quill/ui/components/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@quill/ui/components/field";
 import { Input } from "@quill/ui/components/input";
 import { useForm } from "@tanstack/react-form";
@@ -39,87 +46,88 @@ export default function SignInForm() {
   });
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-col gap-6 px-4 py-10">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-lg font-medium">Log in</h1>
-        <p className="text-muted-foreground">Use your email and password.</p>
-      </div>
+    <Card className="w-full max-w-sm">
+      <CardHeader>
+        <CardTitle>Email and password</CardTitle>
+        <CardDescription>Use the account you signed up with.</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            form.handleSubmit();
+          }}
+        >
+          <FieldGroup>
+            <form.Field name="email">
+              {(field) => (
+                <Field data-invalid={field.state.meta.errors.length > 0}>
+                  <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="email"
+                    autoComplete="email"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                    aria-invalid={field.state.meta.errors.length > 0}
+                  />
+                  <FieldError
+                    errors={field.state.meta.errors.map((error) => ({
+                      message: typeof error === "string" ? error : error?.message,
+                    }))}
+                  />
+                </Field>
+              )}
+            </form.Field>
 
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          form.handleSubmit();
-        }}
-      >
-        <FieldGroup>
-          <form.Field name="email">
-            {(field) => (
-              <Field data-invalid={field.state.meta.errors.length > 0}>
-                <FieldLabel htmlFor={field.name}>Email</FieldLabel>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  type="email"
-                  autoComplete="email"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(event) => field.handleChange(event.target.value)}
-                  aria-invalid={field.state.meta.errors.length > 0}
-                />
-                <FieldError
-                  errors={field.state.meta.errors.map((error) => ({
-                    message: typeof error === "string" ? error : error?.message,
-                  }))}
-                />
-              </Field>
-            )}
-          </form.Field>
+            <form.Field name="password">
+              {(field) => (
+                <Field data-invalid={field.state.meta.errors.length > 0}>
+                  <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                  <Input
+                    id={field.name}
+                    name={field.name}
+                    type="password"
+                    autoComplete="current-password"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(event) => field.handleChange(event.target.value)}
+                    aria-invalid={field.state.meta.errors.length > 0}
+                  />
+                  <FieldError
+                    errors={field.state.meta.errors.map((error) => ({
+                      message: typeof error === "string" ? error : error?.message,
+                    }))}
+                  />
+                </Field>
+              )}
+            </form.Field>
 
-          <form.Field name="password">
-            {(field) => (
-              <Field data-invalid={field.state.meta.errors.length > 0}>
-                <FieldLabel htmlFor={field.name}>Password</FieldLabel>
-                <Input
-                  id={field.name}
-                  name={field.name}
-                  type="password"
-                  autoComplete="current-password"
-                  value={field.state.value}
-                  onBlur={field.handleBlur}
-                  onChange={(event) => field.handleChange(event.target.value)}
-                  aria-invalid={field.state.meta.errors.length > 0}
-                />
-                <FieldError
-                  errors={field.state.meta.errors.map((error) => ({
-                    message: typeof error === "string" ? error : error?.message,
-                  }))}
-                />
-              </Field>
-            )}
-          </form.Field>
+            <form.Subscribe
+              selector={(state) => ({
+                canSubmit: state.canSubmit,
+                isSubmitting: state.isSubmitting,
+              })}
+            >
+              {({ canSubmit, isSubmitting }) => (
+                <Button type="submit" className="w-full" disabled={!canSubmit || isSubmitting}>
+                  {isSubmitting ? "Signing in..." : "Log in"}
+                </Button>
+              )}
+            </form.Subscribe>
+          </FieldGroup>
+        </form>
 
-          <form.Subscribe
-            selector={(state) => ({
-              canSubmit: state.canSubmit,
-              isSubmitting: state.isSubmitting,
-            })}
-          >
-            {({ canSubmit, isSubmitting }) => (
-              <Button type="submit" className="w-full" disabled={!canSubmit || isSubmitting}>
-                {isSubmitting ? "Signing in..." : "Log in"}
-              </Button>
-            )}
-          </form.Subscribe>
-        </FieldGroup>
-      </form>
-
-      <p className="text-muted-foreground">
-        No account?{" "}
-        <Link href="/signup" className="text-foreground underline underline-offset-4">
-          Sign up
-        </Link>
-      </p>
-    </div>
+        <p className="text-center text-sm text-muted-foreground">
+          No account?{" "}
+          <Link href="/signup" className="text-foreground underline underline-offset-4">
+            Sign up
+          </Link>
+        </p>
+      </CardContent>
+    </Card>
   );
 }

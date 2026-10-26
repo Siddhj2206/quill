@@ -50,15 +50,18 @@ db.post
   .limit(20);
 ```
 
-## S3 — Ten most recent posts
+## S3 — Ten most recent original posts
 
-**Question:** What are the ten most recent posts from everyone?
+**Question:** What are the ten most recent original posts from everyone?
 **Screen:** Explore page, latest posts.
 **Code:** `packages/api/src/queries/s3-ten-most-recent-posts.ts`
 
 ```js
-db.post.find({ deletedAt: null }).sort({ createdAt: -1, _id: -1 }).limit(10);
+db.post.find({ deletedAt: null, repostOfId: null }).sort({ createdAt: -1, _id: -1 }).limit(10);
 ```
+
+Repost rows are excluded so a burst of reposts does not fill the Explore feed.
+Reposts still appear in the home timeline and on profiles.
 
 ## S4 — Followers of a user
 

@@ -118,9 +118,9 @@ async function main() {
 
   show(
     "S3",
-    "What are the ten most recent posts from everyone?",
+    "What are the ten most recent original posts from everyone?",
     "Explore page, latest posts",
-    `db.post.find({ deletedAt: null })
+    `db.post.find({ deletedAt: null, repostOfId: null })
   .sort({ createdAt: -1, _id: -1 })
   .limit(10)`,
     (await tenMostRecentPosts(db)).map((post) => ({
