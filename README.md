@@ -23,7 +23,7 @@ bun install
 Start MongoDB as a single-node replica set:
 
 ```bash
-docker compose up -d
+docker compose up -d --wait
 docker exec quill-mongo mongosh --quiet --eval 'try { rs.status() } catch (e) { rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]}) }'
 ```
 
