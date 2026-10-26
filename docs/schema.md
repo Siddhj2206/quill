@@ -74,8 +74,8 @@ the home timeline and suggested-accounts pipelines simple `$lookup`s.
 `Notification` references `recipientId`, `actorId` and an optional `postId`, and
 stores `type` (`LIKE`, `REPOST`, `REPLY`, `FOLLOW`, `MENTION`), `readAt` and
 `createdAt`. It is its own collection because it is written by every interaction
-and read as a separate screen. The unread badge is one indexed count on
-`(recipientId, readAt)`.
+and read as a separate screen. The unread badge is a count on `recipientId` filtered by
+`readAt: null`, served by the recipient index.
 
 ## Indexes
 

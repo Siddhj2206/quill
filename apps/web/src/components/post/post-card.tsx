@@ -13,6 +13,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EllipsisIcon, HeartIcon, MessageCircleIcon, Repeat2Icon } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { useCompose } from "@/components/compose/compose-provider";
@@ -24,6 +25,7 @@ import { useTRPC } from "@/utils/trpc";
 import { PostText } from "./post-text";
 
 export function PostCard({ post }: { post: PostDto }) {
+  const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
@@ -162,7 +164,7 @@ export function PostCard({ post }: { post: PostDto }) {
             disabled={repostPending}
             onClick={() => {
               if (!session) {
-                window.location.href = "/login";
+                router.push("/login");
                 return;
               }
               if (post.repostedByMe) undoRepost.mutate(display.id);
@@ -181,7 +183,7 @@ export function PostCard({ post }: { post: PostDto }) {
             disabled={likePending}
             onClick={() => {
               if (!session) {
-                window.location.href = "/login";
+                router.push("/login");
                 return;
               }
               if (post.likedByMe) unlike.mutate(display.id);

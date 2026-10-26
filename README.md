@@ -24,7 +24,7 @@ Start MongoDB as a single-node replica set:
 
 ```bash
 docker compose up -d
-docker exec quill-mongo mongosh --eval 'rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]})'
+docker exec quill-mongo mongosh --quiet --eval 'try { rs.status() } catch (e) { rs.initiate({_id: "rs0", members: [{_id: 0, host: "localhost:27017"}]}) }'
 ```
 
 The replica set advertises `localhost:27017`, which is the address the app uses.
@@ -98,6 +98,8 @@ bun run dev
 - `bun run auth:generate` regenerates `auth.prisma` from the Better Auth config.
   The committed file is hand-extended with `handle`, `bio`, counters and
   relations, so review that command's output before accepting it.
+- To inspect the created indexes:
+  `docker exec quill-mongo mongosh quill --eval 'db.post.getIndexes()'`.
 
 ## Project layout
 

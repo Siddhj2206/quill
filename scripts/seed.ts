@@ -559,7 +559,10 @@ async function main() {
   console.log("Creating follows...");
   await seedFollows(users);
   console.log("Creating likes...");
-  await seedLikes(users, posts);
+  await seedLikes(
+    users,
+    postRefs.map((post) => ({ id: post.id, authorId: post.authorId })),
+  );
   console.log("Creating notifications...");
   await seedNotifications(users, posts);
 

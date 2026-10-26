@@ -207,7 +207,7 @@ post, counting only users with at least three posts?
 
 ```js
 db.post.aggregate([
-  { $match: { deletedAt: null } },
+  { $match: { deletedAt: null, repostOfId: null } },
   {
     $group: {
       _id: "$authorId",

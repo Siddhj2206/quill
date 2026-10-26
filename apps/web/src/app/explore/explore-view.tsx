@@ -138,7 +138,7 @@ export function ExploreView() {
                 <Skeleton className="m-4 h-16" />
               ) : active.data && active.data.length > 0 ? (
                 active.data.map((entry) => (
-                  <div key={entry.user.id} className="flex items-center justify-between gap-2 px-4">
+                  <div key={entry.user.id} className="flex items-center justify-between gap-2 pr-4">
                     <UserRow user={entry.user} />
                     <div className="shrink-0 text-right text-muted-foreground">
                       <p>{entry.engagementRate.toFixed(1)} per post</p>

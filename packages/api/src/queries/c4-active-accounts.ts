@@ -16,7 +16,7 @@ export function activeAccountsPipeline(
 ): Record<string, unknown>[] {
   const minimumPosts = options.minimumPosts ?? 3;
   return [
-    { $match: { deletedAt: null } },
+    { $match: { deletedAt: null, repostOfId: null } },
     {
       $group: {
         _id: "$authorId",

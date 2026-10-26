@@ -9,6 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@quill/ui/components/dialog";
+import { ScrollArea } from "@quill/ui/components/scroll-area";
 import { Skeleton } from "@quill/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -51,7 +52,7 @@ export function FollowListDialog({
           <DialogTitle>{label}</DialogTitle>
           <DialogDescription>@{handle}</DialogDescription>
         </DialogHeader>
-        <div className="flex max-h-80 flex-col overflow-y-auto">
+        <ScrollArea className="max-h-80">
           {query.isPending ? (
             <div className="flex flex-col gap-2 p-2">
               <Skeleton className="h-12 w-full" />
@@ -62,7 +63,7 @@ export function FollowListDialog({
           ) : (
             <p className="p-4 text-muted-foreground">No {label.toLowerCase()} yet.</p>
           )}
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

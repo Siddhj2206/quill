@@ -21,12 +21,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@quill/ui/components/sidebar";
 import { Skeleton } from "@quill/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { BellIcon, CompassIcon, HomeIcon, LogInIcon, PenLineIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 import { useCompose } from "@/components/compose/compose-provider";
 import { UserAvatar } from "@/components/user-avatar";
@@ -39,6 +41,12 @@ export function AppSidebar() {
   const trpc = useTRPC();
   const { data: session, isPending } = authClient.useSession();
   const { openCompose } = useCompose();
+  const { setOpenMobile } = useSidebar();
+
+  // The mobile sidebar is a sheet; close it when navigation finishes.
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [pathname, setOpenMobile]);
 
   const unread = useQuery({
     ...trpc.notifications.unreadCount.queryOptions(),
@@ -75,6 +83,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       render={<Link href="/home" />}
                       isActive={pathname === "/home"}
+                      tooltip="Home"
                     >
                       <HomeIcon />
                       <span>Home</span>
@@ -84,6 +93,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       render={<Link href="/explore" />}
                       isActive={pathname === "/explore"}
+                      tooltip="Explore"
                     >
                       <CompassIcon />
                       <span>Explore</span>
@@ -93,6 +103,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       render={<Link href="/notifications" />}
                       isActive={pathname === "/notifications"}
+                      tooltip="Notifications"
                     >
                       <BellIcon />
                       <span>Notifications</span>
@@ -105,13 +116,14 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       render={<Link href={profileHref} />}
                       isActive={pathname === `/${user.handle}`}
+                      tooltip="Profile"
                     >
                       <UserIcon />
                       <span>Profile</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                    <SidebarMenuButton onClick={() => openCompose()}>
+                    <SidebarMenuButton onClick={() => openCompose()} tooltip="Post">
                       <PenLineIcon />
                       <span>Post</span>
                     </SidebarMenuButton>
@@ -123,6 +135,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       render={<Link href="/explore" />}
                       isActive={pathname === "/explore"}
+                      tooltip="Explore"
                     >
                       <CompassIcon />
                       <span>Explore</span>
@@ -188,9 +201,7 @@ export function AppSidebar() {
               </DropdownMenu>
             </SidebarMenuItem>
           </SidebarMenu>
-        ) : (
-          <p className="px-2 text-muted-foreground">Log in to post and follow people.</p>
-        )}
+        ) : null}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

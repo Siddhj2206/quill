@@ -93,7 +93,7 @@ export function ComposeProvider({ children }: { children: React.ReactNode }) {
           <Textarea
             value={text}
             onChange={(event) => setText(event.target.value)}
-            placeholder="What are you working on?"
+            placeholder="Write a post."
             aria-label="Post text"
             autoFocus
           />

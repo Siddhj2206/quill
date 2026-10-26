@@ -12,3 +12,5 @@ One line per decision, kept in the order they were made.
 - The app shell is a single root layout with the shadcn sidebar; auth pages render inside the same shell so logged-out visitors see the Explore/Log in/Sign up sidebar.
 - Composing is a global dialog provided by a client context, so the sidebar Post button and every reply button share one form.
 - Post creates always write `replyToId`, `repostOfId` and `deletedAt` explicitly (null when empty), because Prisma's MongoDB `null` filter does not match absent fields.
+- `BETTER_AUTH_URL` defaults to `http://localhost:3001` in the env schema, so a clean clone only needs a database URL and a secret.
+- The active-accounts pipeline counts original posts only, so repost rows do not lower a user's engagement rate.
