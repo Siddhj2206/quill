@@ -171,9 +171,7 @@ const HASHTAG_WEIGHTS = [
   36, 24, 18, 14, 12, 11, 9, 8, 7, 7, 6, 6, 5, 5, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2,
 ];
 
-const EVENING_WEIGHTS = [
-  1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 5, 5, 5, 5, 5, 6, 8, 10, 11, 10, 7, 4,
-];
+const EVENING_WEIGHTS = [1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 5, 5, 5, 5, 5, 6, 8, 10, 11, 10, 7, 4];
 
 function weightedPick<T>(items: readonly T[], weights: readonly number[]): T {
   const total = weights.reduce((sum, weight) => sum + weight, 0);
@@ -195,7 +193,12 @@ function postDate(now: Date): Date {
   // weighting regardless of the machine's timezone.
   const date = new Date(now);
   date.setUTCDate(date.getUTCDate() - dayOffset);
-  date.setUTCHours(hour, faker.number.int({ min: 0, max: 59 }), faker.number.int({ min: 0, max: 59 }), 0);
+  date.setUTCHours(
+    hour,
+    faker.number.int({ min: 0, max: 59 }),
+    faker.number.int({ min: 0, max: 59 }),
+    0,
+  );
   if (date.getTime() > now.getTime()) {
     date.setUTCDate(date.getUTCDate() - 1);
   }
@@ -203,7 +206,9 @@ function postDate(now: Date): Date {
 }
 
 function makeText(hashtags: string[], mentions: string[]): string {
-  let text = faker.helpers.arrayElement(POST_TEMPLATES).replace("{topic}", faker.helpers.arrayElement(TOPICS));
+  let text = faker.helpers
+    .arrayElement(POST_TEMPLATES)
+    .replace("{topic}", faker.helpers.arrayElement(TOPICS));
   if (mentions.length > 0) {
     text = `${mentions.map((mention) => `@${mention}`).join(" ")} ${text}`;
   }
@@ -262,7 +267,13 @@ async function seedPosts(users: SeededUser[]) {
   const created: { id: string; authorId: string; createdAt: Date }[] = [];
 
   for (const [index, createdAt] of postDates.entries()) {
-    const author = index < 8 ? (users[0] as SeededUser) : weightedPick(users, users.map((user) => user.weight));
+    const author =
+      index < 8
+        ? (users[0] as SeededUser)
+        : weightedPick(
+            users,
+            users.map((user) => user.weight),
+          );
     const isReply = index > 5 && faker.number.float() < 0.15;
     const replyTo = isReply ? faker.helpers.arrayElement(created) : null;
     const tagCount = faker.number.float() < 0.4 ? faker.number.int({ min: 1, max: 3 }) : 0;
@@ -294,7 +305,10 @@ async function seedPosts(users: SeededUser[]) {
   // Reposts point at an existing post and carry no text of their own.
   const repostCount = POST_COUNT - baseCount;
   for (let index = 0; index < repostCount; index += 1) {
-    const author = weightedPick(users, users.map((user) => user.weight));
+    const author = weightedPick(
+      users,
+      users.map((user) => user.weight),
+    );
     const original = faker.helpers.arrayElement(created);
     const createdAt = new Date(
       Math.min(
@@ -353,7 +367,9 @@ async function seedFollows(users: SeededUser[]) {
   while (follows.length < FOLLOW_COUNT) {
     const group = faker.number.int({ min: 0, max: 4 });
     const fromGroup = faker.number.float() < 0.65;
-    const follower = users[faker.number.int({ min: group * 10, max: group * 10 + 9 })] as SeededUser;
+    const follower = users[
+      faker.number.int({ min: group * 10, max: group * 10 + 9 })
+    ] as SeededUser;
     const following = fromGroup
       ? (users[faker.number.int({ min: group * 10, max: group * 10 + 9 })] as SeededUser)
       : faker.helpers.arrayElement(users);
@@ -374,12 +390,18 @@ async function seedFollows(users: SeededUser[]) {
 
 async function seedLikes(users: SeededUser[], posts: { id: string; authorId: string }[]) {
   const authorWeight = new Map(users.map((user) => [user.id, user.weight]));
-  const weightedPosts = posts.map((post) => ({ post, weight: authorWeight.get(post.authorId) ?? 1 }));
+  const weightedPosts = posts.map((post) => ({
+    post,
+    weight: authorWeight.get(post.authorId) ?? 1,
+  }));
   const pairs = new Set<string>();
   const likes: { userId: string; postId: string; createdAt: Date }[] = [];
 
   while (likes.length < LIKE_COUNT) {
-    const user = weightedPick(users, users.map((entry) => entry.weight));
+    const user = weightedPick(
+      users,
+      users.map((entry) => entry.weight),
+    );
     const { post } = weightedPick(
       weightedPosts,
       weightedPosts.map((entry) => entry.weight),
@@ -426,7 +448,7 @@ async function recomputeCounts() {
     const [followerCount, followingCount, postCount] = await Promise.all([
       db.follow.count({ where: { followingId: user.id } }),
       db.follow.count({ where: { followerId: user.id } }),
-      db.post.count({ where: { authorId: user.id, deletedAt: null } }),
+      db.post.count({ where: { authorId: user.id, deletedAt: { isSet: false } } }),
     ]);
     await db.user.update({
       where: { id: user.id },
@@ -438,8 +460,8 @@ async function recomputeCounts() {
   for (const post of posts) {
     const [likeCount, replyCount, repostCount] = await Promise.all([
       db.like.count({ where: { postId: post.id } }),
-      db.post.count({ where: { replyToId: post.id, deletedAt: null } }),
-      db.post.count({ where: { repostOfId: post.id, deletedAt: null } }),
+      db.post.count({ where: { replyToId: post.id, deletedAt: { isSet: false } } }),
+      db.post.count({ where: { repostOfId: post.id, deletedAt: { isSet: false } } }),
     ]);
     await db.post.update({
       where: { id: post.id },
@@ -470,7 +492,7 @@ async function verifyCounts() {
     const [followerCount, followingCount, postCount] = await Promise.all([
       db.follow.count({ where: { followingId: user.id } }),
       db.follow.count({ where: { followerId: user.id } }),
-      db.post.count({ where: { authorId: user.id, deletedAt: null } }),
+      db.post.count({ where: { authorId: user.id, deletedAt: { isSet: false } } }),
     ]);
     if (user.followerCount !== followerCount) {
       problems.push(`@${user.handle}: followerCount ${user.followerCount} != ${followerCount}`);
@@ -486,8 +508,8 @@ async function verifyCounts() {
   for (const post of posts) {
     const [likeCount, replyCount, repostCount] = await Promise.all([
       db.like.count({ where: { postId: post.id } }),
-      db.post.count({ where: { replyToId: post.id, deletedAt: null } }),
-      db.post.count({ where: { repostOfId: post.id, deletedAt: null } }),
+      db.post.count({ where: { replyToId: post.id, deletedAt: { isSet: false } } }),
+      db.post.count({ where: { repostOfId: post.id, deletedAt: { isSet: false } } }),
     ]);
     if (
       post.likeCount !== likeCount ||
@@ -538,7 +560,9 @@ async function main() {
   await verifyCounts();
 
   console.log("");
-  console.log(`Seeded ${users.length} users, ${posts.length} posts (${postRefs.length} originals).`);
+  console.log(
+    `Seeded ${users.length} users, ${posts.length} posts (${postRefs.length} originals).`,
+  );
   console.log(`All seeded accounts use the password: ${PASSWORD}`);
   console.log("Sign in as demo@quill.dev to see a populated home feed.");
 }

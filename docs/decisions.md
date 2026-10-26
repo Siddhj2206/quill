@@ -9,3 +9,5 @@ One line per decision, kept in the order they were made.
 - Seed timestamps and the activity chart both use UTC hours, so the seeded evening curve matches `$hour` grouping.
 - The seed includes a `demo@quill.dev` account (password `quill12345`) that follows popular seed accounts, so the home timeline is populated on first login.
 - Turbo's `db:push` task is non-interactive, so `bun run db:push` also works in a non-TTY shell.
+- The app shell is a single root layout with the shadcn sidebar; auth pages render inside the same shell so logged-out visitors see the Explore/Log in/Sign up sidebar.
+- Composing is a global dialog provided by a client context, so the sidebar Post button and every reply button share one form.

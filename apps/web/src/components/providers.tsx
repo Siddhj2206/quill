@@ -1,6 +1,7 @@
 "use client";
 
 import { Toaster } from "@quill/ui/components/sonner";
+import { TooltipProvider } from "@quill/ui/components/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
@@ -15,12 +16,14 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <QueryClientProvider client={queryClient}>
-        <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
-          {children}
-        </TRPCProvider>
-        <ReactQueryDevtools />
-      </QueryClientProvider>
+      <TooltipProvider>
+        <QueryClientProvider client={queryClient}>
+          <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
+            {children}
+          </TRPCProvider>
+          <ReactQueryDevtools />
+        </QueryClientProvider>
+      </TooltipProvider>
       <Toaster richColors />
     </ThemeProvider>
   );
