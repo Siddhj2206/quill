@@ -39,13 +39,20 @@
     "env:generate": "varlock codegen --path ./apps/web/ && varlock codegen --path ./packages/db/",
     "postinstall": "varlock codegen --path ./apps/web/ && varlock codegen --path ./packages/db/",
     "auth:generate": "cd apps/web && bun run auth:generate",
-    "check": "oxlint && oxfmt --write"
+    "check": "oxlint && oxfmt --write",
+    "db:seed": "varlock run -p apps/web -- bun scripts/seed.ts",
+    "queries": "varlock run -p apps/web -- bun scripts/run-queries.ts",
+    "lint": "oxlint"
   },
   "dependencies": {
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.6.0",
+    "@quill/api": "workspace:*",
+    "@quill/auth": "workspace:*",
     "@quill/config": "workspace:*",
+    "@quill/db": "workspace:*",
     "@types/node": "catalog:",
     "oxfmt": "^0.74.0",
     "oxlint": "^1.87.0",

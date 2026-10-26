@@ -1,0 +1,82 @@
+// Quill's application models. The shape and the indexes are explained in
+// docs/schema.md; each query that depends on them lives in packages/api/src/queries.
+
+enum NotificationType {
+  LIKE
+  REPOST
+  REPLY
+  FOLLOW
+  MENTION
+}
+
+model Post {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  authorId    String    @db.ObjectId
+  author      User      @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  text        String
+  hashtags    String[]
+  mentions    String[]
+  replyToId   String?   @db.ObjectId
+  replyTo     Post?     @relation("Replies", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies     Post[]    @relation("Replies")
+  repostOfId  String?   @db.ObjectId
+  repostOf    Post?     @relation("Reposts", fields: [repostOfId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reposts     Post[]    @relation("Reposts")
+  likeCount   Int       @default(0)
+  replyCount  Int       @default(0)
+  repostCount Int       @default(0)
+  createdAt   DateTime  @default(now())
+  deletedAt   DateTime?
+  likes       Like[]
+  notifications Notification[]
+
+  @@index([authorId, createdAt(sort: Desc)])
+  @@index([hashtags, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@index([replyToId, createdAt(sort: Asc)])
+  @@map("post")
+}
+
+model Follow {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  followerId  String   @db.ObjectId
+  follower    User     @relation("FollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String   @db.ObjectId
+  following   User     @relation("FollowFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@map("follow")
+}
+
+model Like {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String   @db.ObjectId
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+  @@index([postId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("like")
+}
+
+model Notification {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  recipientId String           @db.ObjectId
+  recipient   User             @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actorId     String           @db.ObjectId
+  actor       User             @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  postId      String?          @db.ObjectId
+  post        Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+
+  @@index([recipientId, createdAt(sort: Desc)])
+  @@map("notification")
+}

@@ -25,7 +25,7 @@
     },
     "db:push": {
       "cache": false,
-      "interactive": true
+      "interactive": false
     },
     "db:generate": {
       "cache": false,
