@@ -13,7 +13,7 @@ export function RightSidebar() {
   if (AUTH_ROUTES.has(pathname)) return null;
 
   return (
-    <aside className="sticky top-0 hidden h-svh w-80 shrink-0 overflow-y-auto border-l border-border bg-background xl:block">
+    <aside className="sticky top-0 hidden h-svh w-96 shrink-0 overflow-y-auto border-l border-border bg-background xl:block">
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 p-4 backdrop-blur">
         <SearchForm />
       </div>

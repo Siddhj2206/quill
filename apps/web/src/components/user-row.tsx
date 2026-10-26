@@ -22,22 +22,24 @@ export function UserRow({
   showBio?: boolean;
 }) {
   return (
-    <Item className="items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/40">
+    <Item className="!flex-nowrap items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/40">
       <ItemMedia>
         <Link href={`/${user.handle}` as Route} aria-label={user.name}>
           <UserAvatar name={user.name} handle={user.handle} image={user.image} size="lg" />
         </Link>
       </ItemMedia>
-      <ItemContent>
-        <ItemTitle>
-          <Link href={`/${user.handle}` as Route} className="hover:underline">
+      <ItemContent className="min-w-0">
+        <ItemTitle className="w-full min-w-0">
+          <Link href={`/${user.handle}` as Route} className="min-w-0 truncate hover:underline">
             {user.name}
           </Link>
-          <span className="font-normal text-muted-foreground">@{user.handle}</span>
+          <span className="min-w-0 truncate font-normal text-muted-foreground">@{user.handle}</span>
         </ItemTitle>
-        {showBio && user.bio ? <ItemDescription>{user.bio}</ItemDescription> : null}
+        {showBio && user.bio ? (
+          <ItemDescription className="break-words">{user.bio}</ItemDescription>
+        ) : null}
       </ItemContent>
-      {action ? <ItemActions>{action}</ItemActions> : null}
+      {action ? <ItemActions className="shrink-0">{action}</ItemActions> : null}
     </Item>
   );
 }

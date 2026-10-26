@@ -19,3 +19,6 @@ One line per decision, kept in the order they were made.
 - Search is a launcher in the right sidebar on desktop and at the top of Explore on mobile; it navigates to `/explore?q=...`.
 - Logged-out auth entry points sit in the sidebar footer, leaving Explore as the only navigation item.
 - Post rows fill the main column; the readable text measure is capped with `max-w-prose` rather than wrapping the feed in a card.
+- Clicking a post row opens its `/post/[id]` page; links, buttons and menus inside the row keep their own behavior.
+- The composer is an inline `PostComposerForm` (avatar, textarea, count, submit) shared by Home, the reply section and the compose dialog instead of a button that only opens a dialog.
+- The right sidebar is 24rem wide (`w-96`) so names, follow buttons and discovery actions have room.

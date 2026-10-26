@@ -1,24 +1,18 @@
 "use client";
 
-import { Button } from "@quill/ui/components/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@quill/ui/components/dialog";
-import { Textarea } from "@quill/ui/components/textarea";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
-import { useTRPC } from "@/utils/trpc";
 
-type ReplyTarget = { id: string; handle: string };
+import { PostComposerForm, type ReplyTarget } from "./post-composer";
 
 type ComposeContextValue = {
   openCompose: (replyTo?: ReplyTarget) => void;
@@ -34,27 +28,9 @@ export function useCompose() {
 
 export function ComposeProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const { data: session } = authClient.useSession();
   const [open, setOpen] = useState(false);
-  const [text, setText] = useState("");
   const [replyTo, setReplyTo] = useState<ReplyTarget | null>(null);
-
-  const createPost = useMutation(
-    trpc.posts.create.mutationOptions({
-      onSuccess: async () => {
-        setOpen(false);
-        setText("");
-        setReplyTo(null);
-        await queryClient.invalidateQueries();
-        toast.success(replyTo ? "Reply posted." : "Posted.");
-      },
-      onError: (error) => {
-        toast.error(error.message);
-      },
-    }),
-  );
 
   const openCompose = useCallback(
     (target?: ReplyTarget) => {
@@ -69,9 +45,6 @@ export function ComposeProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo(() => ({ openCompose }), [openCompose]);
-
-  const remaining = 280 - text.length;
-  const canSubmit = text.trim().length > 0 && remaining >= 0 && !createPost.isPending;
 
   return (
     <ComposeContext.Provider value={value}>
@@ -90,24 +63,12 @@ export function ComposeProvider({ children }: { children: React.ReactNode }) {
               {replyTo ? `Replying to @${replyTo.handle}.` : "Up to 280 characters."}
             </DialogDescription>
           </DialogHeader>
-          <Textarea
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-            placeholder="Write a post."
-            aria-label="Post text"
+          <PostComposerForm
+            replyTo={replyTo ?? undefined}
             autoFocus
+            onSuccess={() => setOpen(false)}
+            className="border-0 p-0"
           />
-          <DialogFooter className="items-center justify-between sm:justify-between">
-            <span className={remaining < 0 ? "text-destructive" : "text-muted-foreground"}>
-              {text.length}/280
-            </span>
-            <Button
-              disabled={!canSubmit}
-              onClick={() => createPost.mutate({ text, replyToId: replyTo?.id ?? null })}
-            >
-              {createPost.isPending ? "Posting..." : "Post"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </ComposeContext.Provider>

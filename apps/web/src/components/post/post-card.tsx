@@ -36,7 +36,7 @@ import { useTRPC } from "@/utils/trpc";
 
 import { PostText } from "./post-text";
 
-export function PostCard({ post }: { post: PostDto }) {
+export function PostCard({ post, clickable = true }: { post: PostDto; clickable?: boolean }) {
   const router = useRouter();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -144,7 +144,21 @@ export function PostCard({ post }: { post: PostDto }) {
   }
 
   return (
-    <article className="group flex gap-3 border-b border-border px-4 py-4 transition-colors last:border-b-0 hover:bg-muted/40">
+    <article
+      onClick={
+        clickable
+          ? (event) => {
+              const target = event.target as HTMLElement;
+              if (target.closest("a, button, input, textarea, [role='menuitem']")) return;
+              router.push(detailHref);
+            }
+          : undefined
+      }
+      className={cn(
+        "group flex gap-3 border-b border-border px-4 py-4 transition-colors last:border-b-0 hover:bg-muted/40",
+        clickable && "cursor-pointer",
+      )}
+    >
       <Link
         href={`/${display.author.handle}` as Route}
         aria-label={display.author.name}

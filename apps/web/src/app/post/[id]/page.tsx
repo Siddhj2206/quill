@@ -5,7 +5,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   return (
     <PageContainer>
-      <PageHeader title="Post" />
+      <PageHeader title="Post" back />
       <PostDetail id={id} />
     </PageContainer>
   );
