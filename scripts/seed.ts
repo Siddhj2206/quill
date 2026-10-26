@@ -168,7 +168,7 @@ const HASHTAGS = [
 
 // Weighted so that a handful of tags dominate the 24 hour trend query.
 const HASHTAG_WEIGHTS = [
-  36, 24, 18, 14, 12, 11, 9, 8, 7, 7, 6, 6, 5, 5, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2,
+  60, 22, 16, 12, 10, 9, 8, 7, 6, 6, 5, 5, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 1,
 ];
 
 const EVENING_WEIGHTS = [1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 6, 5, 5, 5, 5, 5, 6, 8, 10, 11, 10, 7, 4];
