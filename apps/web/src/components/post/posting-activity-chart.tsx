@@ -35,6 +35,7 @@ export function PostingActivityChart({ handle }: { handle: string }) {
           dataKey="hour"
           tickLine={false}
           axisLine={false}
+          interval={3}
           tickFormatter={(hour: number) => `${hour}`}
         />
         <YAxis hide />

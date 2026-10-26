@@ -35,7 +35,6 @@
     "db:push": "turbo run db:push -F @quill/db --",
     "db:studio": "turbo run db:studio -F @quill/db --",
     "db:generate": "turbo run db:generate -F @quill/db --",
-    "db:migrate": "turbo run db:migrate -F @quill/db --",
     "env:generate": "varlock codegen --path ./apps/web/ && varlock codegen --path ./packages/db/",
     "postinstall": "varlock codegen --path ./apps/web/ && varlock codegen --path ./packages/db/",
     "auth:generate": "cd apps/web && bun run auth:generate",

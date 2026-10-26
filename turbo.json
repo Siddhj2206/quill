@@ -31,10 +31,6 @@
       "cache": false,
       "interactive": false
     },
-    "db:migrate": {
-      "cache": false,
-      "interactive": true
-    },
     "db:studio": {
       "cache": false,
       "persistent": true

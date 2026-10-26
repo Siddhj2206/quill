@@ -152,7 +152,7 @@ export function PostCard({ post }: { post: PostDto }) {
             className="text-muted-foreground"
             onClick={() => openCompose({ id: display.id, handle: display.author.handle })}
           >
-            <MessageCircleIcon />
+            <MessageCircleIcon data-icon="inline-start" />
             <span>{display.replyCount}</span>
             <span className="sr-only">Reply</span>
           </Button>
@@ -171,7 +171,7 @@ export function PostCard({ post }: { post: PostDto }) {
               else repost.mutate(display.id);
             }}
           >
-            <Repeat2Icon />
+            <Repeat2Icon data-icon="inline-start" />
             <span>{display.repostCount}</span>
             <span className="sr-only">{post.repostedByMe ? "Undo repost" : "Repost"}</span>
           </Button>
@@ -190,7 +190,10 @@ export function PostCard({ post }: { post: PostDto }) {
               else like.mutate(display.id);
             }}
           >
-            <HeartIcon className={post.likedByMe ? "fill-current" : undefined} />
+            <HeartIcon
+              data-icon="inline-start"
+              className={post.likedByMe ? "fill-current" : undefined}
+            />
             <span>{display.likeCount}</span>
             <span className="sr-only">{post.likedByMe ? "Unlike" : "Like"}</span>
           </Button>
