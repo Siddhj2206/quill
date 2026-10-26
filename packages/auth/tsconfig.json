@@ -1,0 +1,6 @@
+{
+  "extends": "@quill/config/tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true
+  }
+}

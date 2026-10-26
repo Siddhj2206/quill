@@ -1,0 +1,3 @@
+{
+  "extends": "@quill/config/tsconfig.base.json"
+}

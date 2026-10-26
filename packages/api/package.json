@@ -1,0 +1,22 @@
+{
+  "name": "@quill/api",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@quill/auth": "workspace:*",
+    "@quill/db": "workspace:*",
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@quill/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}
