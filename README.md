@@ -82,6 +82,11 @@ bun run db:seed
 bun run dev
 ```
 
+## Deployment
+
+See [`docs/deployment.md`](docs/deployment.md) for the Vercel + MongoDB Atlas
+setup, environment variables, build command, and production checks.
+
 ## Commands
 
 | Command               | What it does                                                  |
@@ -125,6 +130,7 @@ scripts/run-queries.ts    case-study query runner
 docs/schema.md            model and index rationale
 docs/queries.md           each query with a mongosh version and screen
 docs/decisions.md         one-line implementation decisions
+docs/deployment.md        Vercel + MongoDB Atlas deployment notes
 ```
 
 ## Screens
