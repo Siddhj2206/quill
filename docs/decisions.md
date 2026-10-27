@@ -29,3 +29,4 @@ One line per decision, kept in the order they were made.
 - Handle validation is one Zod schema in `packages/auth/src/handle.ts`, reused by Better Auth, the users router and the sign-up form.
 - Notification types come from Prisma's `NotificationType`; the API does not redeclare the union.
 - Counter updates use Prisma `increment`/`decrement` (with a `gt: 0` guard on decrements) instead of read-modify-write.
+- Prisma uses `prisma-client-js` with its default output inside `@prisma/client`, so Next.js externalizes the client and the native query engine keeps a real `__dirname` on Vercel.

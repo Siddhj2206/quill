@@ -1,4 +1,4 @@
-import { PrismaClient } from "../prisma/generated/client";
+import { PrismaClient } from "@prisma/client";
 import type { DatabaseConfig } from "./config";
 
 export function createPrismaClient(env: DatabaseConfig) {
@@ -15,4 +15,4 @@ export type {
   Like,
   Notification,
   NotificationType,
-} from "../prisma/generated/client";
+} from "@prisma/client";

@@ -59,6 +59,12 @@ That command:
 - regenerates Prisma Client for the Vercel runtime
 - builds only the `web` workspace with Turbo
 
+The Prisma generator uses `prisma-client-js` with its default output inside
+`@prisma/client`. That keeps the native query engine next to the externalized
+client, which survives Vercel's function packaging. Do not move the generated
+client into `packages/db`; Turbopack rewrites `__dirname` for bundled files and
+the runtime then looks for the engine under a path that does not exist.
+
 Vercel detects Bun from `bun.lock` and runs `bun install` automatically. The
 install step also runs the root `postinstall` Varlock codegen; the explicit
 `env:generate` in the build command is a safety net for cached installs.
@@ -130,15 +136,15 @@ not mutate the production database.
 
 ## Troubleshooting
 
-| Symptom                            | Check                                                                                   |
-| ---------------------------------- | --------------------------------------------------------------------------------------- |
-| `P1013` / database must be defined | Add `/quill` before the `?` in `DATABASE_URL`                                           |
-| `P1000` authentication failed      | Add `authSource=admin`, encode the password, and confirm the Atlas user                 |
-| Connection timeout                 | Add the Vercel egress IPs, or `0.0.0.0/0` for the first deployment                      |
-| Prisma engine file missing         | Confirm `bun run db:generate` runs in the build and that Next traces from the repo root |
-| Too many Atlas connections         | Keep `maxPoolSize=5` and check the Atlas connection metrics                             |
-| Auth redirects to the wrong host   | Make `BETTER_AUTH_URL` match the deployed origin exactly                                |
-| Preview login fails                | Give the preview its own `BETTER_AUTH_URL`; production auth is origin-bound             |
+| Symptom                            | Check                                                                                                                                      |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `P1013` / database must be defined | Add `/quill` before the `?` in `DATABASE_URL`                                                                                              |
+| `P1000` authentication failed      | Add `authSource=admin`, encode the password, and confirm the Atlas user                                                                    |
+| Connection timeout                 | Add the Vercel egress IPs, or `0.0.0.0/0` for the first deployment                                                                         |
+| Prisma engine file missing         | Keep `prisma-client-js` on its default output so `@prisma/client` is externalized, and confirm `bun run db:generate` runs before the build |
+| Too many Atlas connections         | Keep `maxPoolSize=5` and check the Atlas connection metrics                                                                                |
+| Auth redirects to the wrong host   | Make `BETTER_AUTH_URL` match the deployed origin exactly                                                                                   |
+| Preview login fails                | Give the preview its own `BETTER_AUTH_URL`; production auth is origin-bound                                                                |
 
 ## References
 

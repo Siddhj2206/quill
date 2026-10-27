@@ -123,7 +123,7 @@ apps/web/                 Next.js app (App Router, tRPC client, sidebar shell)
 packages/api/             tRPC routers, query functions, DTO helpers
   src/queries/            one file per case-study query
 packages/auth/            Better Auth config (handle field, ObjectId ids)
-packages/db/              Prisma schema, generated client
+packages/db/              Prisma schema (client generated into node_modules)
 packages/ui/              shared shadcn/ui components and theme
 scripts/seed.ts           deterministic seed data
 scripts/run-queries.ts    case-study query runner

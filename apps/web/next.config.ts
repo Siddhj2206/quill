@@ -11,9 +11,6 @@ const nextConfig: NextConfig = {
   // The Prisma client and shared packages live outside apps/web. Trace from the
   // repository root so Vercel includes them in the serverless bundles.
   outputFileTracingRoot: path.resolve(process.cwd(), "../.."),
-  outputFileTracingIncludes: {
-    "/*": ["../../packages/db/prisma/generated/**/*"],
-  },
 };
 
 export default withVarlock(nextConfig);
