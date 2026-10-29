@@ -2,10 +2,13 @@
 
 Captured from the production deployment on 2026-10-29:
 
-- `explore.png` — logged-out Explore: latest posts, trending hashtags and who to follow.
-- `home.png` — logged-in Home as `@demo`: follow-graph timeline, composer and right sidebar.
-- `profile.png` — `@demo` profile: post/follower/following counts, posting-activity chart and posts.
-- `notifications.png` — notifications list with unread markers.
+- `explore@2x.png` — logged-out Explore: latest posts, trending hashtags and who to follow.
+- `home@2x.png` — logged-in Home as `@demo`: follow-graph timeline, composer and right sidebar.
+- `profile@2x.png` — `@demo` profile: post/follower/following counts, posting-activity chart and posts.
+- `notifications@2x.png` — notifications list with unread markers.
+
+The `@2x` files are 2560 px wide and are the ones to use in the report. The
+non-`@2x` files are the original 1280 px captures.
 
 The demo login used for the authenticated screens is `demo@quill.dev` / `quill12345`.
 
