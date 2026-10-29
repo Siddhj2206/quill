@@ -1479,22 +1479,24 @@ bun run build
 
 ## Appendix B — Screenshot index template
 
-| Figure  | Query | Screenshot file            | What it shows                      |
-| ------- | ----- | -------------------------- | ---------------------------------- |
-| Fig. 1  | —     | `fig-atlas-cluster.png`    | Atlas cluster and `quill` database |
-| Fig. 2  | —     | `fig-collections.png`      | Collections and document counts    |
-| Fig. 3  | S1    | `fig-s1-posts-by-user.png` | `db.post.find(...)` and rows       |
-| Fig. 4  | S2    | `fig-s2-hashtag.png`       | Hashtag query and rows             |
-| Fig. 5  | S3    | `fig-s3-latest.png`        | Latest original posts              |
-| Fig. 6  | S4    | `fig-s4-followers.png`     | Followers aggregation              |
-| Fig. 7  | S5    | `fig-s5-counts.png`        | Counters document                  |
-| Fig. 8  | C1    | `fig-c1-home-timeline.png` | Timeline aggregation and page      |
-| Fig. 9  | C2    | `fig-c2-trending.png`      | Unwind/group/sort pipeline         |
-| Fig. 10 | C3    | `fig-c3-suggested.png`     | Mutual-follow aggregation          |
-| Fig. 11 | C4    | `fig-c4-engagement.png`    | Engagement-rate pipeline           |
-| Fig. 12 | C5    | `fig-c5-activity.png`      | Hourly grouping                    |
-| Fig. 13 | —     | `fig-app-explore.png`      | Explore screen using the queries   |
-| Fig. 14 | —     | `fig-app-profile.png`      | Profile screen using the queries   |
+| Figure  | Query | Screenshot file                            | What it shows                      |
+| ------- | ----- | ------------------------------------------ | ---------------------------------- |
+| Fig. 1  | —     | `fig-atlas-cluster.png`                    | Atlas cluster and `quill` database |
+| Fig. 2  | —     | `fig-collections.png`                      | Collections and document counts    |
+| Fig. 3  | S1    | `fig-s1-posts-by-user.png`                 | `db.post.find(...)` and rows       |
+| Fig. 4  | S2    | `fig-s2-hashtag.png`                       | Hashtag query and rows             |
+| Fig. 5  | S3    | `fig-s3-latest.png`                        | Latest original posts              |
+| Fig. 6  | S4    | `fig-s4-followers.png`                     | Followers aggregation              |
+| Fig. 7  | S5    | `fig-s5-counts.png`                        | Counters document                  |
+| Fig. 8  | C1    | `fig-c1-home-timeline.png`                 | Timeline aggregation and page      |
+| Fig. 9  | C2    | `fig-c2-trending.png`                      | Unwind/group/sort pipeline         |
+| Fig. 10 | C3    | `fig-c3-suggested.png`                     | Mutual-follow aggregation          |
+| Fig. 11 | C4    | `fig-c4-engagement.png`                    | Engagement-rate pipeline           |
+| Fig. 12 | C5    | `fig-c5-activity.png`                      | Hourly grouping                    |
+| Fig. 13 | —     | `case-study-screenshots/explore.png`       | Logged-out Explore screen          |
+| Fig. 14 | —     | `case-study-screenshots/home.png`          | Logged-in Home timeline            |
+| Fig. 15 | —     | `case-study-screenshots/profile.png`       | Demo profile and activity chart    |
+| Fig. 16 | —     | `case-study-screenshots/notifications.png` | Notifications screen               |
 
 ---
 
