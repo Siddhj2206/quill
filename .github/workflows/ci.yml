@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, pluto, linux]
     timeout-minutes: 15
     env:
       # Placeholder values so the build can validate its environment. Not real secrets.
